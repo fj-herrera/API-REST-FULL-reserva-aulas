@@ -1,0 +1,18 @@
+<?php
+include_once __DIR__ . '/BaseController.php';
+include_once __DIR__ . '/../services/reservaService.php';
+
+class ReservaController extends \App\Controllers\BaseController {
+    public function manejarGetReserva($peticion) {
+        $servicio = new ReservaService();
+        return $this->manejarPeticionGET($servicio, $peticion);
+    }
+}
+
+// Uso procedural (si no usas instancias en el router):
+function manejarGetReservas($peticion) {
+    $controller = new ReservaController();
+    $controller->manejarGetReservas($peticion);
+}
+
+?>
