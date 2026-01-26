@@ -2,6 +2,7 @@
 namespace Config\utilities;
 
 class ValidEndpoints {
+
     public const GET = [
         'aulas' =>          '#^/api/aulas$#',           // /api/aulas
         'aulas-id' =>       '#^/api/aulas/\\d+$#',      // /api/aulas/1
@@ -10,13 +11,17 @@ class ValidEndpoints {
         'franjas' =>        '#^/api/franjas$#',         // /api/franjas
         'franjas-id' =>     '#^/api/franjas/\\d+$#',    // /api/franjas/1
         'reservas' =>       '#^/api/reservas$#',        // /api/reservas
-        'reservasas-id' =>  '#^/api/reservas/\\d+$#'    // /api/reservas/1
+        'reservasas-id' =>  '#^/api/reservas/\\d+$#',    // /api/reservas/1
+
+        // Compuestas
+        'profesores-id-reservas' =>  '#^/api/profesores/\d+/reservas$#', // /api/profesores/1/reservas, 
+        'Aulas-disponibles'      =>  '#^/api/aulas/disponibles$#' // /api/auals/disponibles,
     
     ];
+
     public const validPOST = [
        
     ];
-    // ...otros métodos si los necesitas
 }
 
 class ResponseCodes {

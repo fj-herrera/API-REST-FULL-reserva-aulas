@@ -1,7 +1,7 @@
 <?php
 
 use Config\utilities\ValidEndpoints;
-
+use Config\utilities\ResponseCodes;
 
 include_once __DIR__ . ('/../controllers/BaseController.php');
 include_once __DIR__ . ('/../controllers/aulaController.php');
@@ -32,30 +32,41 @@ function partirPeticion($endpoint){
     return $peticion;
 }
 
+function obtenerParametros($parametros){
+    parse_str($parametros, $grupo_parametros);
+    return $grupo_parametros;
+}
+
+function comprobarFecha($fecha){
+    $hoy = date('Y-m-d');
+    $fecha = date($fecha);
+    $resultado = ($fecha < $hoy) ? false : true; 
+    return $resultado;
+}
+
 /**
- * Función que maneja la perición GET, valido, pariend y llamando al 
- * Controller específico  
+ * Función que maneja la petición GET y llamando al Controller específico  
  */
-function manejarPeticionGET($endpoint){
+function manejarPeticionGET($endpoint,$parametros){
     if (validarPeticion($endpoint) == false){
         echo 'url no valida';
         http_response_code(ResponseCodes::NOT_FOUND);
         exit;
     } else {
         $peticion = partirPeticion($endpoint);
-
+        $parametros = obtenerParametros($parametros);
         switch ($peticion[1]){
             case 'aulas': 
-                manejarGetAulas($peticion);
+                manejarGetAulas($peticion, $parametros);
                 break;
             case 'profesores':    
-                manejarGetProfesores($peticion);
+                manejarGetProfesores($peticion, $parametros);
                 break;    
             case 'franjas':
-                manejarGetFranjas($peticion);
+                manejarGetFranjas($peticion, $parametros);
                 break;
             case 'reservas':   
-                manejarGetReservas($peticion);
+                manejarGetReservas($peticion, $parametros);
                 break;
         }
     }
