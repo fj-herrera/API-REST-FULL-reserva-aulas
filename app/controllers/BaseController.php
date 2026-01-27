@@ -7,30 +7,36 @@ use Config\utilities\ErrMsgs;
 
 class BaseController {
 
-    protected function GET($servicio, $peticion, $parametros) {
-        
+    protected function GET($servicio, $peticion) {
+
+        $partes = count($peticion->get_endpoint());
+        $recurso = $peticion->get_recurso();
+        $id = $peticion->get_id();
+        $parametros = $peticion->get_parametros();
+        $recurso_sec = $peticion->get_recurso_sec();
+
+        var_dump($parametros);
         // /api/xxxx -> 2 elementos
-        if (count($peticion) === 2) {
+        if ($partes === 2) {
             $data = $servicio->obtenerTodos();
             $this->validarRespuesta($data);
         }
 
         // /api/xxxx/1 -> 3 elementos y 3er elemento es un numero  
-        elseif (count($peticion) === 3 && is_int($peticion[2])) {
-            $id = $peticion[2];
+        elseif ($partes === 3 && is_int($id)) {
             $data = $servicio->obtenerPorId($id);
             $this->validarRespuesta($data);
         }
 
         // /api/xxxx/xxxx -> 3 elementos sin parámetros    
-        elseif (count($peticion) === 3 && is_string($peticion[2]) && empty($parametros)) {
-            $id = $peticion[2];
+        elseif ($partes === 3 && is_string($id) && empty($parametros)) {
             $data = $servicio->obtenerPorId($id);
             $this->validarRespuesta($data);
         }
 
         // /api/xxxx/xxxx?params -> 3 elementos + parametros    
-        elseif (count($peticion) === 3 && !empty($parametros)) {
+        elseif ($partes === 3 && !empty($parametros)) {
+            
             $fecha = $parametros['date'];
             $franja = $parametros['id_f'];
             if ($fecha) {
@@ -43,10 +49,8 @@ class BaseController {
         }
 
         // /api/xxxx/1/reservas = 4 elementos y 3er elemento es numero   
-        elseif (count($peticion) === 4 && $peticion[3] == 'reservas') {
-            $id = $peticion[2];
-            $recurso = $peticion[3];
-            $data = $servicio->obtenerPorId_Reservas($id,$recurso);
+        elseif ($partes === 4 && $recurso_sec === 'reservas') {
+            $data = $servicio->obtenerPorId_Reservas($id, $recurso_sec);
             $this->validarRespuesta($data);
         }
     }

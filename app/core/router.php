@@ -2,17 +2,20 @@
 
 include_once __DIR__ . ('/controller.php');
 
-$metodo = $_SERVER['REQUEST_METHOD'] ?? null;
-$endpoint = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? null;
-$parametros = $_SERVER['QUERY_STRING'] ?? null;
+
+$peticion=[];
+$peticion['metodo'] = $_SERVER['REQUEST_METHOD'] ?? null;
+$peticion['endpoint'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? null;
+$peticion['parametros'] = $_SERVER['QUERY_STRING'] ?? null;
+$peticion['body'] = $_SERVER['BODY'] ?? null;
 
 // Se valora el método y se llama a la funcion del controller
-switch ($metodo){
+switch ($peticion['metodo']){
     case 'GET': 
-        manejarPeticionGET($endpoint,$parametros);
+        manejarPeticionGET($peticion);
         break;
     case 'POST': 
-
+        manejarPeticionPOST($peticion);
         break;
     case 'PUT': 
 

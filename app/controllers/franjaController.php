@@ -3,16 +3,16 @@ include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/franjaService.php';
 
 class FranjaController extends \App\Controllers\BaseController {
-    public function manejarGetFranjas($peticion, $parametros) {
+    public function manejarGetFranjas($peticion) {
         $servicio = new FranjaService();
-        return $this->GET($servicio, $peticion, $parametros);
+        return $this->GET($servicio, $peticion);
     }
 }
 
 // Uso procedural (si no usas instancias en el router):
-function manejarGetFranjas($peticion, $parametros) {
+function instanciarFranjaController($peticion) {
     $controller = new FranjaController();
-    $controller->manejarGetFranjas($peticion, $parametros);
+    $controller->manejarGetFranjas($peticion);
 }
 
 ?>

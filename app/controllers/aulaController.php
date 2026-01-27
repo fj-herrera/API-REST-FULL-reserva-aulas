@@ -3,16 +3,16 @@ include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/aulaService.php';
 
 class AulaController extends \App\Controllers\BaseController {
-    public function manejarGetAulas($peticion, $parametros) {
+    public function manejarGetAulas($peticion) {
         $servicio = new AulaService();
-        return $this->GET($servicio, $peticion, $parametros);
+        return $this->GET($servicio, $peticion);
     }
 }
 
 // Uso procedural (si no usas instancias en el router):
-function manejarGetAulas($peticion,$parametros) {
+function instanciarAulaController($peticion) {
     $controller = new AulaController();
-    $controller->manejarGetAulas($peticion,$parametros);
+    $controller->manejarGetAulas($peticion);
 }
 
 ?>

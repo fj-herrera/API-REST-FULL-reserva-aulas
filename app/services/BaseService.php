@@ -45,11 +45,11 @@ class BaseService {
         return $respuesta;
     }
 
-    public function obtenerPorID_Reservas($id,$recurso){
+    public function obtenerPorID_Reservas($id,$recurso_sec){
 
         // Selecciona las reservas hechas por un profesor
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
-        $sql = "SELECT {$campos_reserva} FROM {$recurso} WHERE {$this->fk} = ?";
+        $sql = "SELECT {$campos_reserva} FROM {$recurso_sec} WHERE {$this->fk} = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);

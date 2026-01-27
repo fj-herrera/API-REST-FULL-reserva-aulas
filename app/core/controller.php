@@ -2,6 +2,7 @@
 
 use Config\utilities\ValidEndpoints;
 use Config\utilities\ResponseCodes;
+use Config\utilities\Peticion;
 
 include_once __DIR__ . ('/../controllers/BaseController.php');
 include_once __DIR__ . ('/../controllers/aulaController.php');
@@ -14,7 +15,7 @@ include_once __DIR__ . ('/../controllers/reservaController.php');
  */
 function validarPeticion($endpoint){
     $isValid = false;
-    foreach (validEndpoints::GET as $clave => $valor){
+    foreach (validEndpoints::VALID as $clave => $valor){
         if( preg_match($valor, $endpoint, $matches)){
             $isValid = true;
         }
@@ -22,7 +23,7 @@ function validarPeticion($endpoint){
     return $isValid;
 }
 
-function partirPeticion($endpoint){
+function partirEndpoint($endpoint){
     $parte = strtok($endpoint,"/");
     $peticion =[];
     while ($parte !== false){
@@ -30,11 +31,6 @@ function partirPeticion($endpoint){
         $parte = strtok("/");
     }
     return $peticion;
-}
-
-function obtenerParametros($parametros){
-    parse_str($parametros, $grupo_parametros);
-    return $grupo_parametros;
 }
 
 function comprobarFecha($fecha){
@@ -47,17 +43,53 @@ function comprobarFecha($fecha){
 /**
  * Función que maneja la petición GET y llamando al Controller específico  
  */
-function manejarPeticionGET($endpoint,$parametros){
-    if (validarPeticion($endpoint) == false){
-        echo 'url no valida';
+function manejarPeticionGET($peticion){
+    if (validarPeticion($peticion['endpoint']) == false){
         http_response_code(ResponseCodes::NOT_FOUND);
         exit;
     } else {
-        $peticion = partirPeticion($endpoint);
-        $parametros = obtenerParametros($parametros);
+        
+        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
+        
+        $peticion = new Peticion ($peticion);
+        // $peticion->printPeticion();
+        
+        switch ($peticion->get_recurso()){
+            case 'aulas': 
+                instanciarAulaController($peticion);
+                break;
+            case 'profesores':    
+                instanciarProfesorController($peticion);
+                break;    
+            case 'franjas':
+                instanciarFranjaController($peticion);
+                break;
+            case 'reservas':   
+                instanciarReservaController($peticion);
+                break;
+        }
+       
+    }
+}
+
+
+/**
+ * Función que maneja la petición POST y llamando al Controller específico  
+ */
+function manejarPeticionPOST($peticion){
+    if (validarPeticion($peticion['endpoint']) == false){
+        http_response_code(ResponseCodes::NOT_FOUND);
+        exit; 
+    } else {
+        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
+
+        $peticion = new Peticion ($peticion);
+        $peticion->printPeticion();
+        //$body = ;
+        /*
         switch ($peticion[1]){
             case 'aulas': 
-                manejarGetAulas($peticion, $parametros);
+                instanciarAulaController($peticion, $body);
                 break;
             case 'profesores':    
                 manejarGetProfesores($peticion, $parametros);
@@ -69,6 +101,7 @@ function manejarPeticionGET($endpoint,$parametros){
                 manejarGetReservas($peticion, $parametros);
                 break;
         }
+        */
     }
 }
 ?>
