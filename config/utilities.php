@@ -1,56 +1,42 @@
-<?php 
+<?php
 namespace Config\utilities;
 
 class Peticion {
     private $metodo;
     private $endpoint = [];
-    private $parametros = [];
     private $body;
 
     public function __construct($args) {
         $this->metodo = $args['metodo'] ?? null;
         $this->endpoint = is_array($args['endpoint']) ? $args['endpoint'] : [$args['endpoint']];
-        $this->parametros = $this->set_parametros($args['parametros']);
-        $this->body =$args['body'] ?? null;
+        $this->body = json_decode($args['body'], true);
     }
-    
-    public function get_metodo(){
-        return $this->peticion; 
+    public function getMetodo(){
+        return $this->metodo;
     }
-    public function get_endpoint(){
-        return $this->endpoint; 
+    public function getEndpoint(){
+        return $this->endpoint;
     }
-    public function get_recurso(){
-        return $this->endpoint[1]; 
+    public function getRecurso(){
+        return $this->endpoint[1];
     }
-    public function get_id(){
+    public function getID(){
         if (count($this->endpoint) >= 3) {
             return $this->endpoint[2];
         }
         return null;
     }
-    public function get_recurso_sec(){
+    public function getRecursoSec(){
         if (count($this->endpoint) === 4) {
             return $this->endpoint[3];
         }
         return null;
     }
 
-    public function get_parametros(){
-        return $this->parametros; 
-    }
-    public function get_body(){
-        return $this->body; 
+    public function getBody(){
+        return $this->body;
     }
 
-    private function set_parametros($parametros) {
-        if (is_string($parametros)) {
-            parse_str($parametros, $result);
-            return $result;
-        } else {
-            return null;
-        }
-    }
 
     /*
     public function printPeticion(){
@@ -90,13 +76,23 @@ class ValidEndpoints {
 
 }
 
-class ResponseCodes {
+class ValidValues {
+
+    public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
+    public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
+    public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
+
+}
+
+
+class Codes {
     public const OK =           200;
     public const CREATED =      201;
     public const NO_CONTENT =   204;
     public const BAD_REQUEST =  400;
     public const UNAUTHORIZED = 401;
     public const FORBIDDEN =    403;
+    public const CONFLICT =     409;
     public const NOT_FOUND =    404;
     public const SERVER_ERROR = 500;
 }
@@ -105,11 +101,31 @@ class ErrMsgs {
     public const NOT_FOUND = 'Recurso no encontrado';
     public const INVALID_ENDPOINT = 'URL no válida';
     public const SERVER_ERROR = 'Error interno del servidor';
+    
+    // Aula 
+    public const AULA_EXISTE = 'Ya existe un aula con ese nombre';
+
+    // Profesor 
+    public const NOMBRE_PROFESOR = 'El nombre del profesor no es válido';
+    public const NOMBRE_PROFESOR_EXISTE = 'Ya existe un profesor con este nombre';
+    public const PROFESOR_EXISTE = 'Ya existe un profesor con este nombre y correo';
+    public const EMAIL_PROFESOR = 'El email del profesor no es válido';
+    public const EMAIL_PROFESOR_EXISTE = 'Ya existe un profesor con este email';
+    // Franjas 
+    public const NOMBRE_FRANJA = 'El nombre de la franja no es válido';
+    public const HORA_I_FRANJA = 'El formato de la hora de inicio no es válido';
+    public const HORA_F_FRANJA = 'El formato de la hora de fin no es válido';
+    public const HORAS_FRANJA =  'La hora de fin no puede ser igual o inferior a la hora de inicio';
+    public const NOMBRE_FRANJA_EXISTE = 'Ya existe una franja con este nombre';
+    public const FRANJA_EXISTE = 'Ya existe una franja con la misma hora de inicio y fin';
+
+    // Reservas
 }
 
 class OkMsgs {
-    public const NOT_FOUND = 'Recurso no encontrado';
-    public const INVALID_ENDPOINT = 'URL no válida';
-    public const SERVER_ERROR = 'Error interno del servidor';
+    public const AULA_OK = 'El aula ha sido creada correctamente';
+    public const PROFESOR_OK = 'El profesor ha sido creado correctamente';
+    public const FRANJA_OK = 'La franja ha sido creada correctamente';
+    public const RESERVA_OK = 'La reserva ha sido creada correctamente';
 }
 ?>

@@ -20,12 +20,13 @@ class BaseService {
     */
     protected $db;
     protected $tabla;
-    protected $campos;
+    protected $campos; // Para SELECT
+    protected $campos_insert; // Para INSERT
     protected $fk;
 
     public function __construct() {
         $this->db = getDbConnection();
-    }    
+    }
 
     public function obtenerTodos(){
         $sql = "SELECT {$this->campos} FROM {$this->tabla}";
@@ -57,9 +58,8 @@ class BaseService {
     }
 
      public function obtenerAulasDisponibles($fecha,$franja){
+
         // Selecciona las aulas disponibles para una fecha y franja 
-        $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
-        // la consulta tiene que mostrar los nombres de las aulas disponibles 
         $sql = "SELECT a.id, a.nombre
                 FROM aulas a
                 WHERE NOT EXISTS (
@@ -76,4 +76,67 @@ class BaseService {
         return $respuesta;
     }
 
+    public function obtenerIds(){
+        $sql = "SELECT id FROM {$this->tabla}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $ids = array_column($respuesta, 'id');
+        return $ids;
+    }
+
+    public function obtenerNombres(){
+        $sql = "SELECT nombre FROM {$this->tabla}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $nombres = array_column($respuesta, 'nombre');
+        return $nombres;
+    }
+
+    public function obtenerEmails(){
+        $sql = "SELECT email FROM {$this->tabla}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $emails = array_column($respuesta, 'email');
+        return $emails;
+    }
+
+    public function obtenerFranjas(){
+        $sql = "SELECT hora_inicio, hora_fin FROM {$this->tabla}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $horas_i = array_column($respuesta, 'hora_inicio');
+        $horas_f = array_column($respuesta, 'hora_fin');
+        $horas = [
+            'horas_i' => $horas_i,
+            'horas_f' => $horas_f
+        ];
+        return $horas;
+    }
+    
+    public function agregarAula($body){
+        // Usar $this->camposInsert para evitar incluir 'id' en el insert
+        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$body['nombre'],$body['capacidad'],$body['descripcion']]);
+    }
+
+    public function agregarProfesor($body){
+        
+        // Usar $this->camposInsert para evitar incluir 'id' en el insert
+        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$body['nombre'],$body['email'],$body['rol']]);
+    }
+
+    public function agregarFranja($body){
+        
+        // Usar $this->camposInsert para evitar incluir 'id' en el insert
+        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin']]);
+    }
 }
