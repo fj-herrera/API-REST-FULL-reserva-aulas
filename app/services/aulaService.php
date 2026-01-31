@@ -19,11 +19,34 @@ class AulaService extends \App\Services\BaseService {
     public function agregarAula($body){
         // Si el nombre ya existe
         if ($this->comprobarNombre($body['nombre'])) {
-           return false;
+            return false;
         }
         $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$body['nombre'],$body['capacidad'],$body['descripcion']]);
+    }
+
+    public function actualizarAula($body) {
+        $aulas = $this->obtenerPorID($body['id']);
+        $ids_aulas = array_column($aulas, 'id');
+        $existe = in_array($body['id'], $ids_aulas);
+
+        // Comprobar si el nombre ya existe en otra aula
+        $nombres = $this->obtenerNombres();
+        $aula_actual = $this->obtenerPorID($body['id']);
+        $nombre_actual = $aula_actual[0]['nombre'] ?? null;
+
+        if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
+            return 'nombre'; // Nombre duplicado en otra aula
+        }
+        
+        if ($existe === true){
+            $sql = "UPDATE {$this->tabla} SET nombre = ?, capacidad = ?, descripcion = ? WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$body['nombre'],$body['capacidad'],$body['descripcion'],$body['id']]);
+        } else {
+            return 'no_existe';
+        }
     }
 }
 ?>

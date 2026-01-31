@@ -123,7 +123,16 @@ class BaseService {
         ];
         return $horas;
     }
-
+    
+    // Método auxiliar para obtener reservas por aula
+    public function obtenerReservasPorAula($id_aula){
+        $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
+        $sql = "SELECT {$campos_reserva} FROM reservas WHERE id_aula = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id_aula]);
+        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $respuesta;
+    }
     
 
 }

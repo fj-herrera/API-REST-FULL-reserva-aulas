@@ -69,7 +69,36 @@ function manejarPeticionPOST($peticion){
                 instanciarReservaController($peticion);
                 break;
         }
-        
+    }
+}
+
+/**
+ * Función que maneja la petición PUT y llamando al Controller específico
+ */
+function manejarPeticionPUT($peticion){
+    if (validarPeticion($peticion['endpoint']) == false){
+        http_response_code(Codes::NOT_FOUND);
+        exit; 
+    } else {
+        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
+
+        $peticion = new Peticion ($peticion);
+        //$body = ;
+        switch ($peticion->getRecurso()){
+            case 'aulas': 
+                instanciarAulaController($peticion);
+                break;
+            case 'profesores':    
+                instanciarProfesorController($peticion);
+                break;    
+            case 'franjas':
+                instanciarFranjaController($peticion);
+                break;
+            case 'reservas':   
+                instanciarReservaController($peticion);
+                break;
+        }
     }
 }
 ?>
+

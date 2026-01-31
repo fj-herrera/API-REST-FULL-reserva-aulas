@@ -18,7 +18,8 @@ switch ($peticion['metodo']){
         manejarPeticionPOST($peticion);
         break;
     case 'PUT':
-
+        manejarPeticionPUT($peticion);
+        break;
         break;
     case 'DELETE':
            

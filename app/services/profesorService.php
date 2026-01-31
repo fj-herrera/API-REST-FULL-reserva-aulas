@@ -43,6 +43,33 @@ class ProfesorService extends \App\Services\BaseService {
         return $stmt->execute([$body['nombre'],$body['email'],$body['rol']]);
     }
 
+    public function actualizarProfesor($body) {
+        $profesores = $this->obtenerIds($body['id']);
+        $existe = in_array($body['id'], $profesores);
+
+        // Comprobar si el nombre ya existe en otro profesor
+        $nombres = $this->obtenerNombres();
+        $profesor_actual = $this->obtenerPorID($body['id']);
+        $nombre_actual = $profesor_actual[0]['nombre'] ?? null;
+        if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
+            return 'nombre'; // Nombre duplicado
+        }
+
+        // Comprobar si el email ya existe en otro profesor
+        $emails = $this->obtenerEmails();
+        $email_actual = $profesor_actual[0]['email'] ?? null;
+        if ($body['email'] !== $email_actual && in_array($body['email'], $emails)) {
+            return 'email'; // Email duplicado
+        }
+
+        if ($existe === true){
+            $sql = "UPDATE {$this->tabla} SET nombre = ?, email = ?, rol = ? WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$body['nombre'],$body['email'],$body['rol'],$body['id']]);
+        } else {
+            return 'no_existe';
+        }
+    }
 
 
 }

@@ -10,6 +10,23 @@ use Config\utilities\ValidValues;
         return $isValid;
     }
 
+
+    function validarNombreAula($nombre) {
+        $isValid = false;
+        if( preg_match(ValidValues::NOMBRE_AULA, $nombre, $matches)){
+            $isValid = true;
+        }
+        return $isValid;
+    }
+
+    function validarNombreFranja($nombre) {
+        $isValid = false;
+        if( preg_match(ValidValues::NOMBRE_FRANJA, $nombre, $matches)){
+            $isValid = true;
+        }
+        return $isValid;
+    }
+
     function validarEmail($email) {
         $isValid = false;
         if( preg_match(ValidValues::EMAIL, $email, $matches)){

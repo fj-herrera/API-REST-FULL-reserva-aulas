@@ -12,6 +12,11 @@ class FranjaController extends \App\Controllers\BaseController {
         $servicio = new FranjaService();
         return $this->Post($servicio, $peticion);
     }
+
+    public function manejarPut($peticion) {
+        $servicio = new FranjaService();
+        return $this->Put($servicio, $peticion);
+    }
 }
 
 // Uso procedural (si no usas instancias en el router):
@@ -24,6 +29,10 @@ function instanciarFranjaController($peticion) {
     else if($metodo === 'POST') {
         $controller = new FranjaController();
         $controller->manejarPost($peticion);
+    }
+    else if($metodo === 'PUT') {
+        $controller = new FranjaController();
+        $controller->manejarPut($peticion);
     }
 }
 

@@ -68,10 +68,16 @@ class BaseController {
         
         if ($partes === 2 && $recurso === 'aulas') {
             $data = $servicio->agregarAula($body);
-            if ($data === false) {
-                $this->responder(ErrMsgs::AULA_EXISTE, null, Codes::CONFLICT);
-            } else {
-                $this->responder(OkMsgs::AULA_OK, null, Codes::CREATED) ;
+            $nombre_valido = validarNombreAula($body['nombre']);
+            if ($nombre_valido){
+                if ($data === false) {
+                    $this->responder(ErrMsgs::AULA_EXISTE, null, Codes::CONFLICT);
+                } else {
+                    $this->responder(OkMsgs::AULA_OK, null, Codes::CREATED) ;
+                }
+            }
+            else {
+                $this->responder(ErrMsgs::NOMBRE_AULA, null, Codes::BAD_REQUEST);
             }
         }    
         
@@ -135,6 +141,9 @@ class BaseController {
                 else if (!$hora_f_valida){
                     $this->responder(ErrMsgs::HORA_F_FRANJA, null, Codes::BAD_REQUEST);
                 }
+                else if (!$franja_valida){
+                    $this->responder(ErrMsgs::FRANJA_INVALIDA, null, Codes::BAD_REQUEST);
+                }
             }
         }
 
@@ -160,6 +169,93 @@ class BaseController {
             }
         }
     }
+    
+    protected function Put($servicio, $peticion){
+        $partes = count($peticion->getEndpoint());
+        $recurso = $peticion->getRecurso();
+        $body = $peticion->getBody();
+
+        if ($partes === 2 && $recurso === 'aulas') {
+            $nombre_valido = validarNombreAula($body['nombre']);
+            if ($nombre_valido){
+                $data = $servicio->actualizarAula($body);
+                if ($data === true){
+                    $this->responder(OkMsgs::AULA_UPDATE, null, Codes::OK);
+                } else if ($data === 'nombre') {
+                    $this->responder(ErrMsgs::AULA_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'no_existe'){
+                    $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+                }
+            } 
+            else {
+                $this->responder(ErrMsgs::NOMBRE_PROFESOR, null, Codes::BAD_REQUEST);
+            }   
+        } 
+
+        if ($partes === 2 && $recurso === 'profesores') {
+            $nombre_valido = validarNombre($body['nombre']);
+            $email_valido = validarEmail($body['email']);
+
+            if ($nombre_valido && $email_valido){
+                $data = $servicio->actualizarProfesor($body);
+                if ($data === true){
+                    $this->responder(OkMsgs::PROFESOR_UPDATE, null, Codes::OK);
+                } else if ($data === 'nombre') {
+                    $this->responder(ErrMsgs::NOMBRE_PROFESOR_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'email') {
+                    $this->responder(ErrMsgs::EMAIL_PROFESOR_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'no_existe'){
+                    $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+                }
+            }
+            else {
+                if (!$nombre_valido && !$email_valido){
+                    // Este case hay que depurarlo
+                    // $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::CONFLICT);
+                } else if (!$nombre_valido && $email_valido){
+                    $this->responder(ErrMsgs::NOMBRE_PROFESOR, null, Codes::BAD_REQUEST);
+                } else if ($nombre_valido && !$email_valido){
+                    $this->responder(ErrMsgs::EMAIL_PROFESOR, null, Codes::BAD_REQUEST);
+                }
+            }
+        } 
+
+        if ($partes === 2 && $recurso === 'franjas') {
+            $nombre_valido = validarNombreFranja($body['nombre']);
+            $hora_i_valida = validarHora($body['hora_inicio']);
+            $hora_f_valida = validarHora($body['hora_fin']);
+            $franja_valida = validarFranja($body['hora_inicio'], $body['hora_fin']);
+
+            if ($nombre_valido && $hora_i_valida && $hora_f_valida && $franja_valida){
+                $data = $servicio->actualizarFranja($body);
+                if ($data === true){
+                    $this->responder(OkMsgs::FRANJA_UPDATE, null, Codes::OK);
+                } else if ($data === 'nombre') {
+                    $this->responder(ErrMsgs::NOMBRE_FRANJA_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'franja') {
+                    $this->responder(ErrMsgs::FRANJA_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'ambos') {
+                    $this->responder(ErrMsgs::FRANJA_EXISTE, null, Codes::CONFLICT);
+                } else if ($data === 'no_existe'){
+                    $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+                }
+            }
+            else {
+                if (!$nombre_valido){
+                    $this->responder(ErrMsgs::NOMBRE_FRANJA, null, Codes::BAD_REQUEST);
+                }
+                else if (!$hora_i_valida){
+                    $this->responder(ErrMsgs::HORA_I_FRANJA, null, Codes::BAD_REQUEST);
+                }
+                else if (!$hora_f_valida){
+                    $this->responder(ErrMsgs::HORA_F_FRANJA, null, Codes::BAD_REQUEST);
+                }
+                else if (!$franja_valida){
+                    $this->responder(ErrMsgs::FRANJA_INVALIDA, null, Codes::BAD_REQUEST);
+                }
+            }
+        }
+    }    
 
     protected function validarRespuesta($data){
         if (empty($data)) {

@@ -12,6 +12,11 @@ class AulaController extends \App\Controllers\BaseController {
         $servicio = new AulaService();
         return $this->Post($servicio, $peticion);
     }
+
+    public function manejarPut($peticion) {
+        $servicio = new AulaService();
+        return $this->Put($servicio, $peticion);
+    }
 }
 
 // Uso procedural (si no usas instancias en el router):
@@ -24,6 +29,10 @@ function instanciarAulaController($peticion) {
     else if($metodo === 'POST') {
         $controller = new AulaController();
         $controller->manejarPost($peticion);
+    }
+    else if($metodo === 'PUT') {
+        $controller = new AulaController();
+        $controller->manejarPut($peticion);
     }
    
 }

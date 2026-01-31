@@ -2,6 +2,7 @@
 include_once __DIR__ . '/BaseService.php';
 
 class FranjaService extends \App\Services\BaseService {
+        
     protected $tabla = 'franjas';
     protected $campos = 'id, nombre, hora_inicio, hora_fin';
     protected $campos_insert = "nombre, hora_inicio, hora_fin";
@@ -46,5 +47,46 @@ class FranjaService extends \App\Services\BaseService {
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin']]);
     }
+
+    public function actualizarFranja($body){
+            // Comprobar si existe la franja actual
+            $franjas = $this->obtenerPorId($body['id']);
+            $ids_franjas = array_column($franjas, 'id');
+            $existe = in_array($body['id'], $ids_franjas);
+
+            // Comprobar si el nombre ya existe en otra franja
+            $nombres = $this->obtenerNombres();
+            $franja_actual = $this->obtenerPorId($body['id']);
+            $nombre_actual = $franja_actual[0]['nombre'] ?? null;
+            if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
+                return 'nombre'; // Nombre duplicado
+            }
+
+            // Comprobar si ya existe una franja con el mismo inicio y fin (en otra franja)
+            $horas = $this->obtenerFranjas();
+            $existe_franja = false;
+            foreach ($horas as $franja) {
+                if (
+                    isset($franja['hora_inicio'], $franja['hora_fin'], $franja['id']) &&
+                    $franja['hora_inicio'] === $body['hora_inicio'] &&
+                    $franja['hora_fin'] === $body['hora_fin'] &&
+                    $franja['id'] != $body['id']
+                ) {
+                    $existe_franja = true;
+                    break;
+                }
+            }
+            if ($existe_franja) {
+                return 'franja'; // Franja duplicada
+            }
+
+            if ($existe === true){
+                $sql = "UPDATE {$this->tabla} SET nombre = ?, hora_inicio = ?, hora_fin = ? WHERE id = ?";
+                $stmt = $this->db->prepare($sql);
+                return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin'],$body['id']]);
+            } else {
+                return 'no_existe';
+            }
+        }
 }
 ?>

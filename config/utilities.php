@@ -96,6 +96,9 @@ class ValidEndpoints {
 
 class ValidValues {
     public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
+        // Debe contener al menos una letra o número
+        public const NOMBRE_AULA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
+        public const NOMBRE_FRANJA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
     public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
     public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
     public const FECHA =    '#^\d{4}-\d{2}-\d{2}$#';
@@ -120,6 +123,7 @@ class ErrMsgs {
     public const FECHA_PASADA = 'La fecha indicada ya ha pasado';
     // Aula 
     public const AULA_EXISTE = 'Ya existe un aula con ese nombre';
+    public const NOMBRE_AULA = 'El nombre del aula no es válido';
 
     // Profesor 
     public const NOMBRE_PROFESOR = 'El nombre del profesor no es válido';
@@ -133,6 +137,7 @@ class ErrMsgs {
     public const HORA_F_FRANJA = 'El formato de la hora de fin no es válido';
     public const HORAS_FRANJA =  'La hora de fin no puede ser igual o inferior a la hora de inicio';
     public const NOMBRE_FRANJA_EXISTE = 'Ya existe una franja con este nombre';
+    public const FRANJA_INVALIDA = 'La franja horaria no es válida: la hora de inicio y fin no pueden ser iguales ni la hora de fin anterior a la de inicio.';
     public const FRANJA_EXISTE = 'Ya existe una franja con la misma hora de inicio y fin';
 
     // Reservas
@@ -147,5 +152,9 @@ class OkMsgs {
     public const PROFESOR_OK = 'El profesor ha sido creado correctamente';
     public const FRANJA_OK = 'La franja ha sido creada correctamente';
     public const RESERVA_OK = 'La reserva ha sido creada correctamente';
+
+    public const AULA_UPDATE = 'El aula ha sido actualizada correctamente';
+    public const PROFESOR_UPDATE = 'El Profesor ha sido actualizado correctamente';
+    public const FRANJA_UPDATE = 'La franja ha sido actualizado correctamente';
 }
 ?>
