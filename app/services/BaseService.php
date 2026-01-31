@@ -46,11 +46,11 @@ class BaseService {
         return $respuesta;
     }
 
-    public function obtenerPorID_Reservas($id,$recurso_sec){
+    public function obtenerPorID_Reservas($id){
 
         // Selecciona las reservas hechas por un profesor
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
-        $sql = "SELECT {$campos_reserva} FROM {$recurso_sec} WHERE {$this->fk} = ?";
+        $sql = "SELECT {$campos_reserva} FROM reservas WHERE {$this->fk} = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -138,5 +138,13 @@ class BaseService {
         $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin']]);
+    }
+
+    public function agregarReserva($body){
+        
+        // Usar $this->camposInsert para evitar incluir 'id' en el insert
+        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?,?)";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$body['fecha'],$body['id_profesor'],$body['id_aula'], $body['id_franja']]);
     }
 }

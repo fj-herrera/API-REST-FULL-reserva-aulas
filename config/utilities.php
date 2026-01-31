@@ -81,6 +81,7 @@ class ValidValues {
     public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
     public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
     public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
+    public const FECHA =    '#/^\d{4}-\d{2}-\d{2}$/#';
 
 }
 
@@ -120,6 +121,11 @@ class ErrMsgs {
     public const FRANJA_EXISTE = 'Ya existe una franja con la misma hora de inicio y fin';
 
     // Reservas
+    public const PROFESOR_FRANJA = 'Ya tienes otro aula reservada el mismo dia en la misma franja';
+    public const AULA_FRANJA = 'Este aula ya está reservada en esa franja y fecha';
+    public const FECHA = 'No se puede reservar un aula con una fecha anterior a hoy';
+
+
 }
 
 class OkMsgs {

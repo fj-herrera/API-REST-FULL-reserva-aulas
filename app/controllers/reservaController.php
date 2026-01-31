@@ -7,12 +7,24 @@ class ReservaController extends \App\Controllers\BaseController {
         $servicio = new ReservaService();
         return $this->GET($servicio, $peticion);
     }
+
+    public function manejarPost($peticion) {
+        $servicio = new ReservaService();
+        return $this->Post($servicio, $peticion);
+    }
 }
 
 // Uso procedural (si no usas instancias en el router):
 function instanciarReservaController($peticion) {
-    $controller = new ReservaController();
-    $controller->manejarGet($peticion);
+    $metodo = $peticion->getMetodo();  
+    if ($metodo === 'GET') {
+        $controller = new ReservaController();
+        $controller->manejarGet($peticion);
+    }
+    else if($metodo === 'POST') {
+        $controller = new ReservaController();
+        $controller->manejarPost($peticion);
+    }
 }
 
 ?>

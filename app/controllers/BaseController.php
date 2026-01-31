@@ -9,6 +9,19 @@ use Config\utilities\OkMsgs;
 
 class BaseController {
 
+    private function extraerDatosReserva($body) {
+        return [
+            'nombre' => $body['nombre'] ?? null,
+            'email' => $body['email'] ?? null,
+            'hora_inicio' => $body['hora_inicio'] ?? null,
+            'hora_fin' => $body['hora_fin'] ?? null,
+            'fecha' => $body['fecha'] ?? null,
+            'profesor' => (string)($body['id_profesor'] ?? ''),
+            'aula' => $body['id_aula'] ?? null,
+            'franja' => $body['id_franja'] ?? null,
+        ];
+    }
+
     protected function Get($servicio, $peticion) {
         
         $partes = count($peticion->getEndpoint());
@@ -54,19 +67,18 @@ class BaseController {
         }
     }
 
-    public function Post($servicio, $peticion){
+    protected function Post($servicio, $peticion){
         $partes = count($peticion->getEndpoint());
         $recurso = $peticion->getRecurso();
+        $recurso_sec = $peticion->getRecursoSec() ?? null;
         $id = $peticion->getID();
         $body = $peticion->getBody();
-        $nombre = $body['nombre'] ?? null;
-        $email = $body['email'] ?? null;
-        $hora_inicio = $body['hora_inicio'] ?? null;
-        $hora_fin = $body['hora_fin'] ?? null;
-
+        $reserva = $this->extraerDatosReserva($body);
+               
+        
         // /api/aulas
         if ($partes === 2 && $recurso === 'aulas') {
-            $existe = $this->comprobarNombre($servicio, $nombre);
+            $existe = $this->comprobarNombre($servicio, $reserva['nombre']);
             if (!$existe){
                 $data = $servicio->agregarAula($body);
                 $this->validarRespuesta($data);
@@ -78,11 +90,11 @@ class BaseController {
 
         // /api/profesores
         if ($partes === 2 && $recurso === 'profesores') {
-            $nombre_valido = $this->validarNombre($nombre);
-            $email_valido = $this->validarEmail($email);
+            $nombre_valido = $this->validarNombre($reserva['nombre']);
+            $email_valido = $this->validarEmail($reserva['nombre']);
             if ($nombre_valido && $email_valido){
-                $existe_nombre = $this->comprobarNombre($servicio, $nombre);
-                $existe_email = $this->comprobarEmail($servicio, $email);
+                $existe_nombre = $this->comprobarNombre($servicio, $reserva['nombre']);
+                $existe_email = $this->comprobarEmail($servicio, $reserva['email']);
                 if (!$existe_nombre && !$existe_email){
                     $data = $servicio->agregarProfesor($body);
                     ($data) 
@@ -115,14 +127,14 @@ class BaseController {
 
         // /api/franjas
         if ($partes === 2 && $recurso === 'franjas') {
-            $nombre_valido = $this->validarNombre($nombre);
-            $hora_i_valida = $this->validarHora($hora_inicio);
-            $hora_f_valida = $this->validarHora($hora_fin);
-            $franja_valida = $this->validarFranja($hora_inicio, $hora_fin);
-
+            $nombre_valido = $this->validarNombre($reserva['nombre']);
+            $hora_i_valida = $this->validarHora($reserva['hora_inicio']);
+            $hora_f_valida = $this->validarHora($reserva['hora_fin']);
+            $franja_valida = $this->validarFranja($reserva['hora_inicio'], $reserva['hora_fin']);
+    
             if ($nombre_valido && $hora_i_valida && $hora_f_valida && $franja_valida){
-                $existe_nombre = $this->comprobarNombre($servicio, $nombre);
-                $existe_franja = $this->comprobarFranja($servicio, $hora_inicio, $hora_fin);
+                $existe_nombre = $this->comprobarNombre($servicio, $reserva['nombre']);
+                $existe_franja = $this->comprobarFranja($servicio, $reserva['hora_inicio'], $reserva['hora_fin']);
 
                 if (!$existe_nombre && !$existe_franja){
                     $data = $servicio->agregarFranja($body);
@@ -152,7 +164,37 @@ class BaseController {
                 }
             }
         }
+
+        if ($partes === 2 && $recurso === 'reservas') {
+
+            // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
+            $formato_ok = $this->validarFecha($reserva['fecha']);
+            $no_es_pasado = comprobarFecha($reserva['fecha']); 
+            $franja_disponible = $this->comprobarHoraProfesor($servicio, $reserva);
+            $aula_disponible = $this->comprobarDisponibilidad($servicio, $reserva);
+
+            if ($no_es_pasado) {
+
+                if ($aula_disponible && $franja_disponible) {
+                    $data = $servicio->agregarReserva($body);
+                    ($data) 
+                        ? $this->responder(OkMsgs::RESERVA_OK, null, Codes::CREATED) 
+                        : null;  
+                } 
+                else if ($aula_disponible && !$franja_disponible) {
+                    $this->responder(ErrMsgs::PROFESOR_FRANJA, null, Codes::BAD_REQUEST);
+                } 
+                else if (!$aula_disponible && $franja_disponible) {
+                    $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
+                }  
+            }
+            else {
+                $this->responder(ErrMsgs::FECHA, null, Codes::BAD_REQUEST);
+            }
+        }
     }
+
+    
 
     protected function validarNombre($nombre) {
         $isValid = false;
@@ -175,6 +217,10 @@ class BaseController {
             $isValid = true;
         }
         return $isValid;
+    }
+
+    protected function validarFecha($fecha) {
+        return preg_match(ValidValues::FECHA, $fecha, $matches) ? true : false;
     }
 
     protected function validarRespuesta($data){
@@ -232,6 +278,24 @@ class BaseController {
             return true;
         }
         return false; 
+    }
+
+    protected function comprobarHoraProfesor($servicio, $reserva){
+    // Comprobacion Disponibilidad hora profesor
+        $reservas = $servicio->obtenerPorID_Reservas($reserva['profesor']);
+        $ids_franjas = array_column($reservas, 'id_franja');
+        // esta la franja dsponible para el profesor ese dia?
+        $franja_disponible = (in_array($reserva['franja'], $ids_franjas)) ? true : false ;
+        return $franja_disponible;
+        
+    }
+
+    protected function comprobarDisponibilidad($servicio, $reserva){
+        $id_aula = $reserva['aula'];
+        $disponibles = $servicio->obtenerAulasDisponibles($reserva['fecha'], $reserva['franja']);
+        $ids_aulas = array_column($disponibles, 'id');
+        $aula_disponible = (in_array($id_aula, $ids_aulas)) ? true : false ;
+        return $aula_disponible;
     }
 
     protected function responder($message, $data, $code) {
