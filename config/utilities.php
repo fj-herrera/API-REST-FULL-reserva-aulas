@@ -37,7 +37,7 @@ class Peticion {
         return $this->body;
     }
 
-
+    
     /*
     public function printPeticion(){
         print "metodo: {$this->metodo}\n
@@ -56,8 +56,28 @@ class Peticion {
         */
 }
 
-class ValidEndpoints {
+function validarPeticion($endpoint){
+    $isValid = false;
+    foreach (validEndpoints::VALID as $clave => $valor){
+        if( preg_match($valor, $endpoint, $matches)){
+            $isValid = true;
+        }
+    }
+    return $isValid;
+}
 
+function partirEndpoint($endpoint){
+    $parte = strtok($endpoint,"/");
+    $peticion =[];
+    while ($parte !== false){
+        array_push($peticion, $parte);
+        $parte = strtok("/");
+    }
+    return $peticion;
+}
+
+
+class ValidEndpoints {
     public const VALID = [
         'aulas' =>          '#^/api/aulas$#',           // /api/aulas
         'aulas-id' =>       '#^/api/aulas/\\d+$#',      // /api/aulas/1
@@ -67,24 +87,19 @@ class ValidEndpoints {
         'franjas-id' =>     '#^/api/franjas/\\d+$#',    // /api/franjas/1
         'reservas' =>       '#^/api/reservas$#',        // /api/reservas
         'reservasas-id' =>  '#^/api/reservas/\\d+$#',   // /api/reservas/1
-
         // Compuestas
         'profesores-id-reservas' =>  '#^/api/profesores/\d+/reservas$#', // /api/profesores/1/reservas, 
         'Aulas-disponibles'      =>  '#^/api/aulas/disponibles$#' // /api/auals/disponibles,
     
     ];
-
 }
 
 class ValidValues {
-
     public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
     public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
     public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
-    public const FECHA =    '#/^\d{4}-\d{2}-\d{2}$/#';
-
+    public const FECHA =    '#^\d{4}-\d{2}-\d{2}$#';
 }
-
 
 class Codes {
     public const OK =           200;
@@ -102,7 +117,7 @@ class ErrMsgs {
     public const NOT_FOUND = 'Recurso no encontrado';
     public const INVALID_ENDPOINT = 'URL no válida';
     public const SERVER_ERROR = 'Error interno del servidor';
-    
+    public const FECHA_PASADA = 'La fecha indicada ya ha pasado';
     // Aula 
     public const AULA_EXISTE = 'Ya existe un aula con ese nombre';
 
@@ -123,9 +138,8 @@ class ErrMsgs {
     // Reservas
     public const PROFESOR_FRANJA = 'Ya tienes otro aula reservada el mismo dia en la misma franja';
     public const AULA_FRANJA = 'Este aula ya está reservada en esa franja y fecha';
+    public const AULA_PROFESOR_FRANJA = 'El aula ya esta reservada y el profesor tiene esa franja reservada en otra aula';
     public const FECHA = 'No se puede reservar un aula con una fecha anterior a hoy';
-
-
 }
 
 class OkMsgs {

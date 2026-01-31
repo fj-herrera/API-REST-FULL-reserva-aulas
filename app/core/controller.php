@@ -3,42 +3,16 @@
 use Config\utilities\ValidEndpoints;
 use Config\utilities\Codes;
 use Config\utilities\Peticion;
+use function Config\utilities\validarPeticion;
+use function Config\utilities\partirEndpoint;
+
 
 include_once __DIR__ . ('/../controllers/BaseController.php');
 include_once __DIR__ . ('/../controllers/aulaController.php');
 include_once __DIR__ . ('/../controllers/profesorController.php');
 include_once __DIR__ . ('/../controllers/franjaController.php');
 include_once __DIR__ . ('/../controllers/reservaController.php');
-
-/**
- * Función que valida loa endopoints entrantes comparando con validGET
- */
-function validarPeticion($endpoint){
-    $isValid = false;
-    foreach (validEndpoints::VALID as $clave => $valor){
-        if( preg_match($valor, $endpoint, $matches)){
-            $isValid = true;
-        }
-    }
-    return $isValid;
-}
-
-function partirEndpoint($endpoint){
-    $parte = strtok($endpoint,"/");
-    $peticion =[];
-    while ($parte !== false){
-        array_push($peticion, $parte);
-        $parte = strtok("/");
-    }
-    return $peticion;
-}
-
-function comprobarFecha($fecha){
-    $hoy = date('Y-m-d');
-    $fecha = date($fecha);
-    $resultado = ($fecha < $hoy) ? false : true;
-    return $resultado;
-}
+include_once __DIR__ . '/../../config/validaciones.php';
 
 /**
  * Función que maneja la petición GET y llama al instanciador de Controller específico
@@ -67,7 +41,6 @@ function manejarPeticionGET($peticion){
         }
     }
 }
-
 
 /**
  * Función que maneja la petición POST y llamando al Controller específico

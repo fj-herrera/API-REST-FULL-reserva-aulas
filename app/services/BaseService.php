@@ -2,6 +2,7 @@
 namespace App\Services;
 include_once __DIR__ . ('/../models/Profesor.php');
 
+
 class BaseService {
     /*
     protected function instanciarProfesores($respuesta){
@@ -38,6 +39,14 @@ class BaseService {
         //return instanciarrProfesores($respuesta);
     }
 
+    protected function comprobarId($id){
+    // Comprobacion id
+        if ($id){
+            $ids = $this->obtenerIds();
+            return in_array($id, $ids); 
+        }
+    }
+
     public function obtenerPorID($id){
         $sql = "SELECT {$this->campos} FROM {$this->tabla} WHERE id = ?";
         $stmt = $this->db->prepare($sql);
@@ -56,10 +65,8 @@ class BaseService {
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $respuesta;
     }
-
-     public function obtenerAulasDisponibles($fecha,$franja){
-
-        // Selecciona las aulas disponibles para una fecha y franja 
+    // Selecciona las aulas disponibles para una fecha y franja 
+    public function obtenerAulasDisponibles($fecha,$franja){
         $sql = "SELECT a.id, a.nombre
                 FROM aulas a
                 WHERE NOT EXISTS (
@@ -116,35 +123,7 @@ class BaseService {
         ];
         return $horas;
     }
+
     
-    public function agregarAula($body){
-        // Usar $this->camposInsert para evitar incluir 'id' en el insert
-        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$body['nombre'],$body['capacidad'],$body['descripcion']]);
-    }
 
-    public function agregarProfesor($body){
-        
-        // Usar $this->camposInsert para evitar incluir 'id' en el insert
-        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$body['nombre'],$body['email'],$body['rol']]);
-    }
-
-    public function agregarFranja($body){
-        
-        // Usar $this->camposInsert para evitar incluir 'id' en el insert
-        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin']]);
-    }
-
-    public function agregarReserva($body){
-        
-        // Usar $this->camposInsert para evitar incluir 'id' en el insert
-        $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?,?)";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$body['fecha'],$body['id_profesor'],$body['id_aula'], $body['id_franja']]);
-    }
 }
