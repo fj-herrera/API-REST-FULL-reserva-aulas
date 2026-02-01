@@ -46,12 +46,14 @@ use Config\utilities\ValidValues;
     function validarFecha($fecha) {
         return preg_match(ValidValues::FECHA, $fecha, $matches) ? true : false;
     }
+    
     function comprobarFecha($fecha){
-        $hoy = date('Y-m-d');
-        $fecha = date($fecha);
-        $resultado = ($fecha < $hoy) ? false : true;
-        return $resultado;
+        $hoy = strtotime(date('Y-m-d'));
+        $fecha_ts = strtotime($fecha);
+            if ($fecha_ts === false) return null; // Formato inválido
+        return ($fecha_ts >= $hoy);
     }
+
     function validarFranja($hora_i, $hora_f){
     // Comprobacion Franja horaria
         $isOk = true;

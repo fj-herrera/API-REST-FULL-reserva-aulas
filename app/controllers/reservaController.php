@@ -12,6 +12,11 @@ class ReservaController extends \App\Controllers\BaseController {
         $servicio = new ReservaService();
         return $this->Post($servicio, $peticion);
     }
+
+    public function manejarPut($peticion) {
+        $servicio = new ReservaService();
+        return $this->Put($servicio, $peticion);
+    }
 }
 
 // Uso procedural (si no usas instancias en el router):
@@ -24,6 +29,10 @@ function instanciarReservaController($peticion) {
     else if($metodo === 'POST') {
         $controller = new ReservaController();
         $controller->manejarPost($peticion);
+    }
+    else if($metodo === 'PUT') {
+        $controller = new ReservaController();
+        $controller->manejarPut($peticion);
     }
 }
 

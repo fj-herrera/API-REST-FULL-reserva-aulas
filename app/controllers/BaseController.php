@@ -164,12 +164,15 @@ class BaseController {
                     $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
                 }  
             }
-            else {
+            else if (!$no_es_pasado && $formato_ok){
                 $this->responder(ErrMsgs::FECHA, null, Codes::BAD_REQUEST);
+            }
+            else if (!$formato_ok){
+                $this->responder(ErrMsgs::FECHA_FORMATO, null, Codes::BAD_REQUEST);
             }
         }
     }
-    
+
     protected function Put($servicio, $peticion){
         $partes = count($peticion->getEndpoint());
         $recurso = $peticion->getRecurso();
@@ -253,6 +256,31 @@ class BaseController {
                 else if (!$franja_valida){
                     $this->responder(ErrMsgs::FRANJA_INVALIDA, null, Codes::BAD_REQUEST);
                 }
+            }
+        }
+
+        if ($partes === 2 && $recurso === 'reservas') {
+
+            // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
+            $formato_ok = validarFecha($body['fecha']);
+            $no_es_pasado = comprobarFecha($body['fecha']); 
+            if ($no_es_pasado && $formato_ok) {
+                $data = $servicio->actualizarReserva($body);
+                if ($data === true){
+                    $this->responder(OkMsgs::RESERVA_UPDATE, null, Codes::CREATED);
+                } else if ($data === 'franja') {
+                    $this->responder(ErrMsgs::PROFESOR_FRANJA, null, Codes::BAD_REQUEST);
+                } else if ($data === 'aula') {
+                    $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
+                } else if ($data === 'ambos') {
+                    $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
+                }  
+            }
+            else if (!$no_es_pasado && $formato_ok){
+                $this->responder(ErrMsgs::FECHA, null, Codes::BAD_REQUEST);
+            }
+            else if (!$formato_ok){
+                $this->responder(ErrMsgs::FECHA_FORMATO, null, Codes::BAD_REQUEST);
             }
         }
     }    

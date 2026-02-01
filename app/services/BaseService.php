@@ -111,17 +111,11 @@ class BaseService {
     }
 
     public function obtenerFranjas(){
-        $sql = "SELECT hora_inicio, hora_fin FROM {$this->tabla}";
+        $sql = "SELECT id, hora_inicio, hora_fin FROM {$this->tabla}";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $horas_i = array_column($respuesta, 'hora_inicio');
-        $horas_f = array_column($respuesta, 'hora_fin');
-        $horas = [
-            'horas_i' => $horas_i,
-            'horas_f' => $horas_f
-        ];
-        return $horas;
+        $franjas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $franjas;
     }
     
     // Método auxiliar para obtener reservas por aula

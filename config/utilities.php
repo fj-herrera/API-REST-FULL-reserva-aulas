@@ -96,9 +96,10 @@ class ValidEndpoints {
 
 class ValidValues {
     public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
-        // Debe contener al menos una letra o número
-        public const NOMBRE_AULA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
-        public const NOMBRE_FRANJA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
+    // Debe contener al menos una letra o número
+    public const NOMBRE_AULA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
+    public const NOMBRE_FRANJA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
+
     public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
     public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
     public const FECHA =    '#^\d{4}-\d{2}-\d{2}$#';
@@ -145,6 +146,7 @@ class ErrMsgs {
     public const AULA_FRANJA = 'Este aula ya está reservada en esa franja y fecha';
     public const AULA_PROFESOR_FRANJA = 'El aula ya esta reservada y el profesor tiene esa franja reservada en otra aula';
     public const FECHA = 'No se puede reservar un aula con una fecha anterior a hoy';
+    public const FECHA_FORMATO = 'El formato de la fecha no es correcto';
 }
 
 class OkMsgs {
@@ -156,5 +158,6 @@ class OkMsgs {
     public const AULA_UPDATE = 'El aula ha sido actualizada correctamente';
     public const PROFESOR_UPDATE = 'El Profesor ha sido actualizado correctamente';
     public const FRANJA_UPDATE = 'La franja ha sido actualizado correctamente';
+    public const RESERVA_UPDATE = 'La reserva ha sido actualizada correctamente';
 }
 ?>
