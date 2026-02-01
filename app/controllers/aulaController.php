@@ -17,9 +17,13 @@ class AulaController extends \App\Controllers\BaseController {
         $servicio = new AulaService();
         return $this->Put($servicio, $peticion);
     }
+
+    public function manejarDelete($peticion) {
+        $servicio = new AulaService();
+        return $this->Delete($servicio, $peticion);
+    }
 }
 
-// Uso procedural (si no usas instancias en el router):
 function instanciarAulaController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {
@@ -34,7 +38,8 @@ function instanciarAulaController($peticion) {
         $controller = new AulaController();
         $controller->manejarPut($peticion);
     }
-   
+    else if($metodo === 'DELETE') {
+        $controller = new AulaController();
+        $controller->manejarDelete($peticion);
+    }
 }
-
-?>

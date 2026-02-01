@@ -17,9 +17,13 @@ class FranjaController extends \App\Controllers\BaseController {
         $servicio = new FranjaService();
         return $this->Put($servicio, $peticion);
     }
+
+    public function manejarDelete($peticion) {
+        $servicio = new FranjaService();
+        return $this->Delete($servicio, $peticion);
+    }
 }
 
-// Uso procedural (si no usas instancias en el router):
 function instanciarFranjaController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {
@@ -34,6 +38,8 @@ function instanciarFranjaController($peticion) {
         $controller = new FranjaController();
         $controller->manejarPut($peticion);
     }
+    else if($metodo === 'DELETE') {
+        $controller = new FranjaController();
+        $controller->manejarDelete($peticion);
+    }
 }
-
-?>

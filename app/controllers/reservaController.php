@@ -17,6 +17,11 @@ class ReservaController extends \App\Controllers\BaseController {
         $servicio = new ReservaService();
         return $this->Put($servicio, $peticion);
     }
+
+    public function manejarDelete($peticion) {
+        $servicio = new ReservaService();
+        return $this->Delete($servicio, $peticion);
+    }
 }
 
 // Uso procedural (si no usas instancias en el router):
@@ -34,6 +39,8 @@ function instanciarReservaController($peticion) {
         $controller = new ReservaController();
         $controller->manejarPut($peticion);
     }
+    else if($metodo === 'DELETE') {
+        $controller = new ReservaController();
+        $controller->manejarDelete($peticion);
+    }
 }
-
-?>

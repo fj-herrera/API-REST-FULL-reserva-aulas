@@ -11,21 +11,26 @@ class Peticion {
         $this->endpoint = is_array($args['endpoint']) ? $args['endpoint'] : [$args['endpoint']];
         $this->body = json_decode($args['body'], true);
     }
+
     public function getMetodo(){
         return $this->metodo;
     }
+
     public function getEndpoint(){
         return $this->endpoint;
     }
+
     public function getRecurso(){
         return $this->endpoint[1];
     }
+
     public function getID(){
         if (count($this->endpoint) >= 3) {
             return $this->endpoint[2];
         }
         return null;
     }
+
     public function getRecursoSec(){
         if (count($this->endpoint) === 4) {
             return $this->endpoint[3];
@@ -33,27 +38,27 @@ class Peticion {
         return null;
     }
 
+    public function getIdBorrar(){
+        return $this->body['id_recurso'];
+    }
+
+    public function getRol(){
+        if (isset($this->body['rol_user'])){
+            return $this->body['rol_user'];
+        }
+        return null;
+    }
+
+    public function getIdUser(){
+        if (isset($this->body['id_user'])){
+            return $this->body['id_user'];
+        }
+        return null;
+    }
+
     public function getBody(){
         return $this->body;
     }
-
-    
-    /*
-    public function printPeticion(){
-        print "metodo: {$this->metodo}\n
-              endpoint: {$this->printArray($this->endpoint)}\n
-              parametros:{$this->printArray($this->parametros)}\n
-              body: {$this->body}";
-    }
-
-    private function printArray($array){
-        $resultado ='';
-        foreach ($array as $k => $v){
-            $resultado .="'{$k}'=>'{$v} | '"; 
-        }
-        return $resultado;
-    }
-        */
 }
 
 function validarPeticion($endpoint){
@@ -76,7 +81,6 @@ function partirEndpoint($endpoint){
     return $peticion;
 }
 
-
 class ValidEndpoints {
     public const VALID = [
         'aulas' =>          '#^/api/aulas$#',           // /api/aulas
@@ -91,6 +95,14 @@ class ValidEndpoints {
         'profesores-id-reservas' =>  '#^/api/profesores/\d+/reservas$#', // /api/profesores/1/reservas, 
         'Aulas-disponibles'      =>  '#^/api/aulas/disponibles$#' // /api/auals/disponibles,
     
+    ];
+}
+
+class AdminEndpoints {
+    public const ADMIN_ONLY = [
+        '/api/aulas',
+        '/api/profesores',
+        '/api/franjas'
     ];
 }
 
@@ -121,10 +133,13 @@ class ErrMsgs {
     public const NOT_FOUND = 'Recurso no encontrado';
     public const INVALID_ENDPOINT = 'URL no válida';
     public const SERVER_ERROR = 'Error interno del servidor';
+    public const PERMISOS = 'No esta autorizado para realizar esta operación';
     public const FECHA_PASADA = 'La fecha indicada ya ha pasado';
+
     // Aula 
     public const AULA_EXISTE = 'Ya existe un aula con ese nombre';
     public const NOMBRE_AULA = 'El nombre del aula no es válido';
+    public const AULA_RESERVAS = 'El aula no se puede borrar por que tiene reservas asociadas';
 
     // Profesor 
     public const NOMBRE_PROFESOR = 'El nombre del profesor no es válido';
@@ -159,5 +174,7 @@ class OkMsgs {
     public const PROFESOR_UPDATE = 'El Profesor ha sido actualizado correctamente';
     public const FRANJA_UPDATE = 'La franja ha sido actualizado correctamente';
     public const RESERVA_UPDATE = 'La reserva ha sido actualizada correctamente';
+
+    public const AULA_DELETE = 'El aula ha sido borrada correctamente';
+    
 }
-?>

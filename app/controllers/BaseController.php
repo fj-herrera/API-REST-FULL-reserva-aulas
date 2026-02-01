@@ -1,7 +1,5 @@
 <?php
 namespace App\Controllers;
-// use Config\utilities\ValidValues;
-// use Config\utilities\ValidEndpoints;
 use Config\utilities\Codes;
 use Config\utilities\ErrMsgs;
 use Config\utilities\OkMsgs;
@@ -64,7 +62,6 @@ class BaseController {
         $recurso_sec = $peticion->getRecursoSec() ?? null;
         $id = $peticion->getID();
         $body = $peticion->getBody();
-       // $reserva = $this->extraerDatosReserva($body);
         
         if ($partes === 2 && $recurso === 'aulas') {
             $data = $servicio->agregarAula($body);
@@ -148,7 +145,6 @@ class BaseController {
         }
 
         if ($partes === 2 && $recurso === 'reservas') {
-
             // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
             $formato_ok = validarFecha($body['fecha']);
             $no_es_pasado = comprobarFecha($body['fecha']); 
@@ -284,6 +280,88 @@ class BaseController {
             }
         }
     }    
+
+    protected function Delete($servicio, $peticion){
+        
+        $id = $peticion->getIdBorrar();
+        $partes = count($peticion->getEndpoint());
+        $recurso = $peticion->getRecurso();
+
+        if ($partes === 2 && $recurso === 'aulas') {
+            $aula_existe = $servicio->comprobarID($id);
+            if ($aula_existe) {
+                $data = $servicio->borrarAula($id);
+                if ($data === true){
+                    $this->responder(OkMsgs::AULA_DELETE, null, Codes::NO_CONTENT);
+                }
+                else if ($data === 'reservas'){
+                    $this->responder(ErrMsgs::AULA_RESERVAS, null, Codes::CONFLICT);
+                }
+            } 
+            else {
+                $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+            }
+        }
+
+        if ($partes === 2 && $recurso === 'profesores') {
+            $profe_existe = $servicio->comprobarID($id);
+            if ($profe_existe) {
+                $data = $servicio->borrarProfesor($id);
+                if ($data === true){
+                    $this->responder(null, null, Codes::NO_CONTENT);
+                }
+            } 
+            else {
+                $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+            }
+        }
+
+        if ($partes === 2 && $recurso === 'franjas') {
+            $franja_existe = $servicio->comprobarID($id);
+            if ($franja_existe) {
+                $data = $servicio->borrarFranja($id);
+                if ($data === true){
+                    $this->responder(null, null, Codes::NO_CONTENT);
+                }
+            } 
+            else {
+                $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+            }
+        }
+
+        if ($partes === 2 && $recurso === 'reservas') {
+            $reserva_existe = $servicio->comprobarID($id);
+            $rol = $peticion->getRol();
+            $id_profesor = $peticion->getIdUser();
+            if ($reserva_existe) {
+                // admin
+                if ($rol === 'admin'){
+                    $data = $servicio->borrarReserva($id);
+                }
+                // profesor
+                else if ($rol === 'profesor' ){
+                    
+                    // Preguntar por el propietario de la reserva
+                    $reserva = $servicio->obtenerPorID($id);
+                    $id_propietario = $reserva[0]['id_profesor'] ?? null;
+                    $es_propietario = ($id_profesor === $id_propietario);
+                    if ($es_propietario){
+                        $data = $servicio->borrarReserva($id);
+                    }
+                    else {
+                        $this->responder(ErrMsgs::PERMISOS, null, Codes::FORBIDDEN);
+                        $data = false; 
+                    }
+                }
+                if ($data === true){
+                    $this->responder(null, null, Codes::NO_CONTENT);
+                }
+            } 
+            else {
+                $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);    
+            }
+        }
+    }
 
     protected function validarRespuesta($data){
         if (empty($data)) {

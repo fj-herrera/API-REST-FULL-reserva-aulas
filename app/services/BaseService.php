@@ -1,24 +1,7 @@
 <?php
 namespace App\Services;
-include_once __DIR__ . ('/../models/Profesor.php');
-
 
 class BaseService {
-    /*
-    protected function instanciarProfesores($respuesta){
-        $grupoProfesores = [];
-        foreach ($respuesta as $objeto){
-            $profesor = new Profesor(
-                $objeto['id'],
-                $objeto['nombre'],
-                $objeto['email'],
-                $objeto['rol']
-            );
-            $grupoProfesores[] = $profesor;
-        }
-        return $grupoProfesores;
-    }
-    */
     protected $db;
     protected $tabla;
     protected $campos; // Para SELECT
@@ -35,12 +18,9 @@ class BaseService {
         $stmt->execute();
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $respuesta;
-        // Devolver objetos Profesores
-        //return instanciarrProfesores($respuesta);
     }
 
-    protected function comprobarId($id){
-    // Comprobacion id
+    public function comprobarId($id){
         if ($id){
             $ids = $this->obtenerIds();
             return in_array($id, $ids); 
@@ -56,7 +36,6 @@ class BaseService {
     }
 
     public function obtenerPorID_Reservas($id){
-
         // Selecciona las reservas hechas por un profesor
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
         $sql = "SELECT {$campos_reserva} FROM reservas WHERE {$this->fk} = ?";
@@ -65,6 +44,7 @@ class BaseService {
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $respuesta;
     }
+
     // Selecciona las aulas disponibles para una fecha y franja 
     public function obtenerAulasDisponibles($fecha,$franja){
         $sql = "SELECT a.id, a.nombre
@@ -76,7 +56,6 @@ class BaseService {
                     AND r.id_franja = ?
                     AND r.fecha = ?
                 );";
-
         $stmt = $this->db->prepare($sql);
         $stmt->execute([ $franja, $fecha]);
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -117,7 +96,6 @@ class BaseService {
         $franjas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $franjas;
     }
-    
     // Método auxiliar para obtener reservas por aula
     public function obtenerReservasPorAula($id_aula){
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
@@ -127,6 +105,16 @@ class BaseService {
         $respuesta = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $respuesta;
     }
-    
 
+    public function borrarReservasPoId($id) {
+        $sql = "DELETE FROM reservas WHERE {$this->fk} = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$id]);
+    }
+
+    public function borrarReserva($id) {
+        $sql = "DELETE FROM reservas WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$id]);
+    }
 }

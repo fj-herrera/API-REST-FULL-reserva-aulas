@@ -1,3 +1,10 @@
+# 1. Forzar el charset global en el servidor
+AddDefaultCharset UTF-8
+
+# 2. Asegurar que los archivos JSON se sirvan correctamente
+AddType application/json .json
+
+# Tu configuración actual
 DirectoryIndex index.php
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f

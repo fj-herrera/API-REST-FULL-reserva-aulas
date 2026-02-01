@@ -1,4 +1,3 @@
-
 <?php
 include_once __DIR__ . '/BaseService.php';
 
@@ -29,7 +28,6 @@ class ReservaService extends \App\Services\BaseService {
         return true;
     }
 
-    // --- NUEVO: solapamiento por rango horario ---
     protected function comprobarDisponibilidad($body, $id_reserva_actual = null){
         $id_aula = $body['id_aula'];
         $reservas = $this->obtenerReservasPorAula($id_aula);
@@ -87,4 +85,3 @@ class ReservaService extends \App\Services\BaseService {
         return $stmt->execute([$body['fecha'],$body['id_profesor'],$body['id_aula'], $body['id_franja'], $id_reserva]);
     }
 }
-?>

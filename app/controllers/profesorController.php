@@ -17,9 +17,13 @@ class ProfesorController extends \App\Controllers\BaseController {
         $servicio = new ProfesorService();
         return $this->Put($servicio, $peticion);
     }
+
+    public function manejarDelete($peticion) {
+        $servicio = new ProfesorService();
+        return $this->Delete($servicio, $peticion);
+    }
 }
 
-// Uso procedural (si no usas instancias en el router):
 function instanciarProfesorController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {
@@ -34,6 +38,8 @@ function instanciarProfesorController($peticion) {
         $controller = new ProfesorController();
         $controller->manejarPut($peticion);
     }
+    else if($metodo === 'DELETE') {
+        $controller = new ProfesorController();
+        $controller->manejarDelete($peticion);
+    }
 }
-
-?>

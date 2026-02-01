@@ -48,5 +48,16 @@ class AulaService extends \App\Services\BaseService {
             return 'no_existe';
         }
     }
+
+    public function borrarAula($id){
+        $reservas = $this->obtenerPorID_Reservas($id);
+        if (empty($reservas)){
+            $sql = "DELETE FROM {$this->tabla} WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$id]);
+        }
+        else {
+            return 'reservas';
+        }
+    }
 }
-?>

@@ -28,7 +28,6 @@ class ProfesorService extends \App\Services\BaseService {
     public function agregarProfesor($body){
         $existe_nombre = $this->comprobarNombre($body['nombre']);
         $existe_email = $this->comprobarEmail($body['email']);
-
         if ($existe_nombre && $existe_email) {
             return 'ambos';
         } elseif ($existe_nombre) {
@@ -36,7 +35,6 @@ class ProfesorService extends \App\Services\BaseService {
         } elseif ($existe_email) {
             return 'email';
         }
-
         // Usar $this->camposInsert para evitar incluir 'id' en el insert
         $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
         $stmt = $this->db->prepare($sql);
@@ -71,6 +69,20 @@ class ProfesorService extends \App\Services\BaseService {
         }
     }
 
-
+    public function borrarProfesor($id){
+        $reservas = $this->obtenerPorID_Reservas($id);
+        if (empty($reservas)){
+            $sql = "DELETE FROM {$this->tabla} WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$id]);
+        }
+        else {
+            $borrado_reservas = $this-> borrarReservasPoId($id);
+            if ($borrado_reservas === true){
+                $sql = "DELETE FROM {$this->tabla} WHERE id = ?";
+                $stmt = $this->db->prepare($sql);
+                return $stmt->execute([$id]);
+            }
+        }
+    }
 }
-?>

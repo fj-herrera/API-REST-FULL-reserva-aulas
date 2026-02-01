@@ -1,7 +1,5 @@
 <?php
-
 include_once __DIR__ . ('/controller.php');
-
 
 $peticion=[];
 $peticion['metodo'] = $_SERVER['REQUEST_METHOD'] ?? null;
@@ -20,9 +18,7 @@ switch ($peticion['metodo']){
     case 'PUT':
         manejarPeticionPUT($peticion);
         break;
-        break;
     case 'DELETE':
-           
+        manejarPeticionDELETE($peticion);   
         break;
 }
-?>
