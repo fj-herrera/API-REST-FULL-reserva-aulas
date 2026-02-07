@@ -8,32 +8,26 @@ include_once __DIR__ . '/../../config/validaciones.php';
 class BaseController {
 
     protected function Get($servicio, $peticion) {
-        
-        $partes = count($peticion->getEndpoint());
+        //var_dump($peticion);
+        $recurso = $peticion->getRecurso();
         $id = $peticion->getID();
-        $recurso_sec = $peticion->getRecursoSec();
+        $sub_recurso = $peticion->getSubRecurso();
         $body = $peticion->getBody();
 
-        // /api/xxxx 
-        if ($partes === 2) {
+        // /api/recurso
+        if ($recurso && !$id && !$sub_recurso) {
             $data = $servicio->obtenerTodos();
             $this->validarRespuesta($data);
         }
 
-        // /api/xxxx/1 
-        elseif ($partes === 3 && is_numeric($id)) {
+        // /api/recurso/id 
+        else if ($recurso && $id && !$sub_recurso) {
             $data = $servicio->obtenerPorId($id);
             $this->validarRespuesta($data);
         }
 
-        // /api/xxxx/xxxx 
-        elseif ($partes === 3  && $id ==='reservas' ) {
-            $data = $servicio->obtenerPorId($id);
-            $this->validarRespuesta($data);
-        }
-
-        // /api/xxxx/xxxx/ +body (aulas disponibles)
-        elseif ($partes === 3 && $id === 'disponibles' ) {
+        // /api/recurso/sub_recurso +body
+        else if ($recurso && $sub_recurso === 'disponibles' && !$id) {
             $fecha = $body['fecha'];
             $franja = $body['id_franja'];
             $data = null;
@@ -49,24 +43,22 @@ class BaseController {
             $this->validarRespuesta($data);
         }
 
-        // /api/xxxx/1/reservas 
-        elseif ($partes === 4 && $recurso_sec === 'reservas') {
-            $data = $servicio->obtenerPorId_Reservas($id, $recurso_sec);
+        // /api/recurso/id/sub_recurso
+        else if ($recurso && $id && $sub_recurso === 'reservas') {
+            $data = $servicio->obtenerPorId_Reservas($id, $sub_recurso);
             $this->validarRespuesta($data);
         }
     }
 
     protected function Post($servicio, $peticion){
-        $partes = count($peticion->getEndpoint());
+        //var_dump($peticion);
         $recurso = $peticion->getRecurso();
-        $recurso_sec = $peticion->getRecursoSec() ?? null;
-        $id = $peticion->getID();
         $body = $peticion->getBody();
         
-        if ($partes === 2 && $recurso === 'aulas') {
-            $data = $servicio->agregarAula($body);
+        if ($recurso === 'aulas') {
             $nombre_valido = validarNombreAula($body['nombre']);
             if ($nombre_valido){
+                $data = $servicio->agregarAula($body);
                 if ($data === false) {
                     $this->responder(ErrMsgs::AULA_EXISTE, null, Codes::CONFLICT);
                 } else {
@@ -77,21 +69,22 @@ class BaseController {
                 $this->responder(ErrMsgs::NOMBRE_AULA, null, Codes::BAD_REQUEST);
             }
         }    
-        
-        if ($partes === 2 && $recurso === 'profesores') {
+
+        if ($recurso === 'profesores') {
             $nombre_valido = validarNombre($body['nombre']);
             $email_valido = validarEmail($body['email']);
+            $body['id'] = $peticion->getId();
             if ($nombre_valido && $email_valido){
 
                 $data = $servicio->agregarProfesor($body);
 
                 if ($data === true) {
                     $this->responder(OkMsgs::PROFESOR_OK, null, Codes::CREATED);
-                } elseif ($data === 'nombre'){
+                } else if ($data === 'nombre'){
                     $this->responder(ErrMsgs::NOMBRE_PROFESOR_EXISTE, null, Codes::BAD_REQUEST);
-                } elseif ($data === 'email'){
+                } else if ($data === 'email'){
                     $this->responder(ErrMsgs::EMAIL_PROFESOR_EXISTE, null, Codes::BAD_REQUEST);
-                } elseif ($data === 'ambos'){
+                } else if ($data === 'ambos'){
                     $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::BAD_REQUEST); 
                 }
             }
@@ -107,9 +100,8 @@ class BaseController {
             }
         }
 
-        // /api/franjas
-        if ($partes === 2 && $recurso === 'franjas') {
-            $nombre_valido = validarNombre($body['nombre']);
+        if ($recurso === 'franjas') {
+            $nombre_valido = validarNombreFranja($body['nombre']);
             $hora_i_valida = validarHora($body['hora_inicio']);
             $hora_f_valida = validarHora($body['hora_fin']);
             $franja_valida = validarFranja($body['hora_inicio'], $body['hora_fin']);
@@ -144,10 +136,15 @@ class BaseController {
             }
         }
 
-        if ($partes === 2 && $recurso === 'reservas') {
+        if ($recurso === 'reservas') {
             // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
             $formato_ok = validarFecha($body['fecha']);
             $no_es_pasado = comprobarFecha($body['fecha']); 
+            // Validación: un profesor solo puede reservar para sí mismo
+            if ($body['rol_user'] === 'profesor' && $body['id_user'] != $body['id_profesor']) {
+                $this->responder('No está permitido reservar para otro profesor.', null, Codes::FORBIDDEN);
+                return;
+            }
             if ($no_es_pasado && $formato_ok) {
                 $data = $servicio->agregarReserva($body);
                 if ($data === true){
@@ -158,7 +155,13 @@ class BaseController {
                     $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
                 } else if ($data === 'ambos') {
                     $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
-                }  
+                } else if ($data === 'aula_inexistente') {
+                    $this->responder(ErrMsgs::ID_AULA, null, Codes::NOT_FOUND);
+                } else if ($data === 'profesor_inexistente') {
+                    $this->responder(ErrMsgs::ID_PROFESOR, null, Codes::NOT_FOUND);
+                } else if ($data === 'franja_inexistente') {
+                    $this->responder(ErrMsgs::ID_FRANJA, null, Codes::NOT_FOUND);
+                }
             }
             else if (!$no_es_pasado && $formato_ok){
                 $this->responder(ErrMsgs::FECHA, null, Codes::BAD_REQUEST);
@@ -170,12 +173,14 @@ class BaseController {
     }
 
     protected function Put($servicio, $peticion){
-        $partes = count($peticion->getEndpoint());
+        //var_dump($peticion);
         $recurso = $peticion->getRecurso();
         $body = $peticion->getBody();
 
-        if ($partes === 2 && $recurso === 'aulas') {
+        if ($recurso === 'aulas') {
             $nombre_valido = validarNombreAula($body['nombre']);
+            // Añadir el id al body desde la URL
+            $body['id'] = $peticion->getId();
             if ($nombre_valido){
                 $data = $servicio->actualizarAula($body);
                 if ($data === true){
@@ -191,10 +196,11 @@ class BaseController {
             }   
         } 
 
-        if ($partes === 2 && $recurso === 'profesores') {
+        if ($recurso === 'profesores') {
             $nombre_valido = validarNombre($body['nombre']);
             $email_valido = validarEmail($body['email']);
-
+            // Añadir el id al body desde la URL
+            $body['id'] = $peticion->getId();
             if ($nombre_valido && $email_valido){
                 $data = $servicio->actualizarProfesor($body);
                 if ($data === true){
@@ -219,12 +225,13 @@ class BaseController {
             }
         } 
 
-        if ($partes === 2 && $recurso === 'franjas') {
+        if ($recurso === 'franjas') {
             $nombre_valido = validarNombreFranja($body['nombre']);
             $hora_i_valida = validarHora($body['hora_inicio']);
             $hora_f_valida = validarHora($body['hora_fin']);
             $franja_valida = validarFranja($body['hora_inicio'], $body['hora_fin']);
-
+            // Añadir el id al body desde la URL
+            $body['id'] = $peticion->getId();
             if ($nombre_valido && $hora_i_valida && $hora_f_valida && $franja_valida){
                 $data = $servicio->actualizarFranja($body);
                 if ($data === true){
@@ -255,11 +262,47 @@ class BaseController {
             }
         }
 
-        if ($partes === 2 && $recurso === 'reservas') {
-
+        if ($recurso === 'reservas') {
+            // Obtener la reserva actual para comparar propietario
+            $id_reserva = $peticion->getId();
+            $reserva_actual = $servicio->obtenerPorID($id_reserva);
+            if (empty($reserva_actual)) {
+                $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);
+                return;
+            }
+            // Validar campo obligatorio id_profesor antes de comprobar propiedad
+            if (!isset($body['id_profesor'])) {
+                $this->responder(ErrMsgs::FALTA_ID_PROFESOR_RESERVA, null, Codes::BAD_REQUEST);
+                return;
+            }
+            $id_propietario = $reserva_actual[0]['id_profesor'] ?? null;
+            // Validación: un profesor solo puede modificar sus propias reservas
+            if ($body['rol_user'] === 'profesor' && $body['id_user'] != $id_propietario) {
+                $this->responder(ErrMsgs::RESERVA_AJENA, null, Codes::FORBIDDEN);
+                return;
+            }
+            // Impedir traspaso de reserva a otro profesor (solo si el usuario es el propietario)
+            if ($body['id_user'] == $id_propietario && $body['id_profesor'] != $id_propietario) {
+                $this->responder(ErrMsgs::TRASPASO_AJENO, null, Codes::FORBIDDEN);
+                return;
+            }
+            // Validar campos obligatorios uno a uno
+            if (!isset($body['fecha'])) {
+                $this->responder(ErrMsgs::FALTA_FECHA_RESERVA, null, Codes::BAD_REQUEST);
+                return;
+            }
+            if (!isset($body['id_aula'])) {
+                $this->responder(ErrMsgs::FALTA_ID_AULA_RESERVA, null, Codes::BAD_REQUEST);
+                return;
+            }
+            if (!isset($body['id_franja'])) {
+                $this->responder(ErrMsgs::FALTA_ID_FRANJA_RESERVA, null, Codes::BAD_REQUEST);
+                return;
+            }
             // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
             $formato_ok = validarFecha($body['fecha']);
-            $no_es_pasado = comprobarFecha($body['fecha']); 
+            $no_es_pasado = comprobarFecha($body['fecha']);
+            $body['id'] = $peticion->getId(); 
             if ($no_es_pasado && $formato_ok) {
                 $data = $servicio->actualizarReserva($body);
                 if ($data === true){
@@ -270,7 +313,15 @@ class BaseController {
                     $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
                 } else if ($data === 'ambos') {
                     $this->responder(ErrMsgs::AULA_FRANJA, null, Codes::BAD_REQUEST);
-                }  
+                } else if ($data === 'aula_inexistente') {
+                    $this->responder(ErrMsgs::ID_AULA, null, Codes::NOT_FOUND);
+                } else if ($data === 'profesor_inexistente') {
+                    $this->responder(ErrMsgs::ID_PROFESOR, null, Codes::NOT_FOUND);
+                } else if ($data === 'franja_inexistente') {
+                    $this->responder(ErrMsgs::ID_FRANJA, null, Codes::NOT_FOUND);
+                } else if ($data === 'no_existe') {
+                    $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);
+                }
             }
             else if (!$no_es_pasado && $formato_ok){
                 $this->responder(ErrMsgs::FECHA, null, Codes::BAD_REQUEST);
@@ -282,12 +333,11 @@ class BaseController {
     }    
 
     protected function Delete($servicio, $peticion){
-        
+        //var_dump($peticion);
         $id = $peticion->getIdBorrar();
-        $partes = count($peticion->getEndpoint());
         $recurso = $peticion->getRecurso();
 
-        if ($partes === 2 && $recurso === 'aulas') {
+        if ($recurso === 'aulas') {
             $aula_existe = $servicio->comprobarID($id);
             if ($aula_existe) {
                 $data = $servicio->borrarAula($id);
@@ -303,7 +353,7 @@ class BaseController {
             }
         }
 
-        if ($partes === 2 && $recurso === 'profesores') {
+        if ($recurso === 'profesores') {
             $profe_existe = $servicio->comprobarID($id);
             if ($profe_existe) {
                 $data = $servicio->borrarProfesor($id);
@@ -316,7 +366,7 @@ class BaseController {
             }
         }
 
-        if ($partes === 2 && $recurso === 'franjas') {
+        if ($recurso === 'franjas') {
             $franja_existe = $servicio->comprobarID($id);
             if ($franja_existe) {
                 $data = $servicio->borrarFranja($id);
@@ -329,7 +379,7 @@ class BaseController {
             }
         }
 
-        if ($partes === 2 && $recurso === 'reservas') {
+        if ($recurso === 'reservas') {
             $reserva_existe = $servicio->comprobarID($id);
             $rol = $peticion->getRol();
             $id_profesor = $peticion->getIdUser();
@@ -340,7 +390,11 @@ class BaseController {
                 }
                 // profesor
                 else if ($rol === 'profesor' ){
-                    
+                    // Validar que id_user está presente
+                    if (!$id_profesor) {
+                        $this->responder('Falta el campo obligatorio: id_user', null, Codes::BAD_REQUEST);
+                        return;
+                    }
                     // Preguntar por el propietario de la reserva
                     $reserva = $servicio->obtenerPorID($id);
                     $id_propietario = $reserva[0]['id_profesor'] ?? null;

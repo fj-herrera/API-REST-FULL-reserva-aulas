@@ -2,10 +2,34 @@
 include_once __DIR__ . '/BaseService.php';
 
 class ReservaService extends \App\Services\BaseService {
+        
     protected $tabla = 'reservas';
     protected $campos = 'id, fecha, id_profesor, id_aula, id_franja';
     protected $campos_insert = 'fecha, id_profesor, id_aula, id_franja';
     protected $fk = 'id_profesor';
+
+    // Comprueba que todos los IDs referenciados existen antes de actualizar
+    protected function comprobarReferencias($body) {
+        // Comprobar aula
+        $aulaService = new AulaService();
+        $id_aula = $body['id_aula'] ?? null;
+        if (!$aulaService->comprobarId($id_aula)) {
+            return 'aula';
+        }
+        // Comprobar profesor
+        $profService = new ProfesorService();
+        $id_profesor = $body['id_profesor'] ?? null;
+        if (!$profService->comprobarId($id_profesor)) {
+            return 'profesor';
+        }
+        // Comprobar franja
+        $franjaService = new FranjaService();
+        $id_franja = $body['id_franja'] ?? null;
+        if (!$franjaService->comprobarId($id_franja)) {
+            return 'franja';
+        }
+        return true;
+    }
 
     // --- NUEVO: solapamiento por rango horario ---
     protected function comprobarHoraProfesor($body, $id_reserva_actual = null){
@@ -50,6 +74,11 @@ class ReservaService extends \App\Services\BaseService {
     }
 
     public function agregarReserva($body){
+        // Validar referencias antes de cualquier comprobación
+        $referencias = $this->comprobarReferencias($body);
+        if ($referencias !== true) {
+            return $referencias . '_inexistente';
+        }
         $franja_disponible = $this->comprobarHoraProfesor($body);
         $aula_disponible = $this->comprobarDisponibilidad($body);
         if (!$aula_disponible && !$franja_disponible) {
@@ -69,6 +98,11 @@ class ReservaService extends \App\Services\BaseService {
         $id_reserva = $body['id'] ?? null;
         if (!$id_reserva) {
             return 'no_existe';
+        }
+        // Comprobar referencias
+        $referencias = $this->comprobarReferencias($body);
+        if ($referencias !== true) {
+            return $referencias .'_inexistente';
         }
         $franja_disponible = $this->comprobarHoraProfesor($body, $id_reserva);
         $aula_disponible = $this->comprobarDisponibilidad($body, $id_reserva);

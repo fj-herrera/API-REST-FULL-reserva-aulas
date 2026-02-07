@@ -3,57 +3,62 @@ namespace Config\utilities;
 
 class Peticion {
     private $metodo;
-    private $endpoint = [];
+    private $id;
+    private $recurso;
+    private $sub_recurso;
     private $body;
 
     public function __construct($args) {
         $this->metodo = $args['metodo'] ?? null;
-        $this->endpoint = is_array($args['endpoint']) ? $args['endpoint'] : [$args['endpoint']];
-        $this->body = json_decode($args['body'], true);
+        $this->id = $this->setId($args);
+        $this->recurso = $this->setRecurso($args);
+        $this->sub_recurso = $this->setSubRecurso($args);
+        $this->body = json_decode($args['body'], true) ?? null;
     }
 
     public function getMetodo(){
         return $this->metodo;
     }
 
-    public function getEndpoint(){
-        return $this->endpoint;
+    private function setID($args){
+        return (isset($args['id'])) ? $args['id'] : null;
+    }
+
+    public function getId(){
+        return ($this->id) ? $this->id : null;
+    }
+
+    private function setRecurso($args) {
+        return (isset($args['recurso'])) ? $args['recurso'] : null;
     }
 
     public function getRecurso(){
-        return $this->endpoint[1];
+        return $this->recurso;
     }
 
-    public function getID(){
-        if (count($this->endpoint) >= 3) {
-            return $this->endpoint[2];
-        }
-        return null;
+    private function setSubRecurso($args){
+        return (isset($args['sub_recurso'])) ? $args['sub_recurso'] : null;
     }
 
-    public function getRecursoSec(){
-        if (count($this->endpoint) === 4) {
-            return $this->endpoint[3];
-        }
-        return null;
+    public function getSubRecurso(){
+        return $this->sub_recurso;
     }
 
     public function getIdBorrar(){
-        return $this->body['id_recurso'];
+        // Si el id viene del endpoint, úsalo (PUT/DELETE /api/recurso/{id})
+        if ($this->id) {
+            return $this->id;
+        }
+        // Fallback: si no, usa el body (para compatibilidad)
+        return $this->body['id_recurso'] ?? null;
     }
 
     public function getRol(){
-        if (isset($this->body['rol_user'])){
-            return $this->body['rol_user'];
-        }
-        return null;
+        return (isset($this->body['rol_user'])) ? $this->body['rol_user'] : null;
     }
 
     public function getIdUser(){
-        if (isset($this->body['id_user'])){
-            return $this->body['id_user'];
-        }
-        return null;
+        return (isset($this->body['id_user'])) ? $this->body['id_user'] : null;
     }
 
     public function getBody(){
@@ -71,14 +76,39 @@ function validarPeticion($endpoint){
     return $isValid;
 }
 
-function partirEndpoint($endpoint){
-    $parte = strtok($endpoint,"/");
-    $peticion =[];
-    while ($parte !== false){
-        array_push($peticion, $parte);
-        $parte = strtok("/");
+/**
+ * Normaliza el body recibido: si es string JSON, lo decodifica a array.
+ * Si ya es array, lo retorna tal cual.
+ */
+function normalizarBody($rawBody) {
+    if (is_string($rawBody)) {
+        $body = json_decode($rawBody, true);
+        return is_array($body) ? $body : [];
     }
-    return $peticion;
+    return $rawBody;
+}
+
+// Extrae y valida parámetros del endpoint, como el recurso y el id numérico
+function extraerPartesEndpoint($endpoint) {
+    $partes = array_values(array_filter(explode('/', $endpoint)));
+    $parametros = [];
+    // api/recurso
+    if (isset($partes[1])) {
+        $parametros['recurso'] = $partes[1];
+    }
+    // api/recurso/id
+    if (isset($partes[2]) && is_numeric($partes[2])) {
+        $parametros['id'] = (int)$partes[2];
+    }
+    // api/recurso/sub-recurso
+    else if (isset($partes[2]) && is_string($partes[2])) {
+        $parametros['sub_recurso'] = $partes[2];
+    }
+    // api/recurso/id/sub-recurso
+    if (isset($partes[2]) && isset($partes[3]) && is_numeric($partes[2])) {
+        $parametros['sub_recurso'] = $partes[3];
+    }
+    return $parametros;
 }
 
 class ValidEndpoints {
@@ -90,7 +120,7 @@ class ValidEndpoints {
         'franjas' =>        '#^/api/franjas$#',         // /api/franjas
         'franjas-id' =>     '#^/api/franjas/\\d+$#',    // /api/franjas/1
         'reservas' =>       '#^/api/reservas$#',        // /api/reservas
-        'reservasas-id' =>  '#^/api/reservas/\\d+$#',   // /api/reservas/1
+            'reservas-id' =>  '#^/api/reservas/\\d+$#',   // /api/reservas/1
         // Compuestas
         'profesores-id-reservas' =>  '#^/api/profesores/\d+/reservas$#', // /api/profesores/1/reservas, 
         'Aulas-disponibles'      =>  '#^/api/aulas/disponibles$#' // /api/auals/disponibles,
@@ -107,11 +137,9 @@ class AdminEndpoints {
 }
 
 class ValidValues {
-    public const NOMBRE =   '#^(?=.{1,100}$)[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]+$#';
-    // Debe contener al menos una letra o número
+    public const NOMBRE =   '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ\s]{1,100}$#';
+    public const NOMBRE_FRANJA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\-\s]{1,100}$#u';
     public const NOMBRE_AULA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
-    public const NOMBRE_FRANJA = '#^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9])[A-Za-zÁÉÍÓÚáéíóúÑñüÜ0-9\\-\\s]{1,100}$#';
-
     public const EMAIL =    '#^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$#';
     public const HORA =     '#^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$#';
     public const FECHA =    '#^\d{4}-\d{2}-\d{2}$#';
@@ -162,6 +190,17 @@ class ErrMsgs {
     public const AULA_PROFESOR_FRANJA = 'El aula ya esta reservada y el profesor tiene esa franja reservada en otra aula';
     public const FECHA = 'No se puede reservar un aula con una fecha anterior a hoy';
     public const FECHA_FORMATO = 'El formato de la fecha no es correcto';
+    public const ID_PROFESOR = 'La referencia del profesor asociado a la reserva no existe';
+    public const ID_AULA = 'La referencia de el aula asociada a la reserva no existe';
+    public const ID_FRANJA = 'La referencia de la franja asociada a la reserva no existe';
+    // Reservas (custom)
+    public const CAMPOS_OBLIGATORIOS_RESERVA = 'Faltan campos obligatorios: fecha, id_aula o id_franja';
+    public const RESERVA_AJENA = 'No está permitido modificar reservas de otro profesor.';
+    public const TRASPASO_AJENO = 'No está permitido asignar la reserva a otro profesor.';
+    public const FALTA_FECHA_RESERVA = 'Falta el campo obligatorio: fecha';
+    public const FALTA_ID_AULA_RESERVA = 'Falta el campo obligatorio: id_aula';
+    public const FALTA_ID_FRANJA_RESERVA = 'Falta el campo obligatorio: id_franja';
+    public const FALTA_ID_PROFESOR_RESERVA = 'Falta el campo obligatorio: id_profesor';
 }
 
 class OkMsgs {

@@ -1,12 +1,9 @@
 <?php
-
-use Config\utilities\ValidEndpoints;
-use Config\utilities\AdminEndpoints;
 use Config\utilities\Codes;
 use Config\utilities\ErrMsgs;
 use Config\utilities\Peticion;
 use function Config\utilities\validarPeticion;
-use function Config\utilities\partirEndpoint;
+use function Config\utilities\normalizarBody;
 
 
 include_once __DIR__ . ('/../controllers/BaseController.php');
@@ -17,16 +14,14 @@ include_once __DIR__ . ('/../controllers/reservaController.php');
 include_once __DIR__ . '/../../config/validaciones.php';
 
 /**
- * Función que maneja la petición GET y llama al instanciador de Controller específico
+ * Función que maneja la petición GET y llamado al Controller específico
  */
 function manejarPeticionGET($peticion){
     if (validarPeticion($peticion['endpoint']) == false){
         http_response_code(Codes::NOT_FOUND);
         exit;
     } else {
-        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
         $peticion = new Peticion ($peticion);
-        // $peticion->printPeticion();
         switch ($peticion->getRecurso()){
             case 'aulas':
                 instanciarAulaController($peticion);
@@ -52,11 +47,17 @@ function manejarPeticionPOST($peticion){
         http_response_code(Codes::NOT_FOUND);
         exit; 
     } else {
-        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
+        $body = normalizarBody($peticion['body']);
+        $rol = $body['rol_user'] ?? null;
+        $clave = $body['api_key'] ?? null;
+        $endpoint = $peticion['endpoint'];
 
+        if (!validarAcceso($endpoint, $rol, $clave)) {
+            http_response_code(403);
+            echo json_encode(['Message' => ErrMsgs::PERMISOS]);
+            exit;
+        }
         $peticion = new Peticion ($peticion);
-        //$body = ;
-        
         switch ($peticion->getRecurso()){
             case 'aulas': 
                 instanciarAulaController($peticion);
@@ -82,10 +83,18 @@ function manejarPeticionPUT($peticion){
         http_response_code(Codes::NOT_FOUND);
         exit; 
     } else {
-        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
+        $body = normalizarBody($peticion['body']);
+        $rol = $body['rol_user'] ?? null;
+        $clave = $body['api_key'] ?? null;
+        $id_user = $body['id_user'] ?? null;
+        $endpoint = $peticion['endpoint'];
 
+        if (!validarAccesoPUT($endpoint, $rol, $id_user, $body, $clave)) {
+            http_response_code(403);
+            echo json_encode(['Message' => ErrMsgs::PERMISOS]);
+            exit;
+        }
         $peticion = new Peticion ($peticion);
-        //$body = ;
         switch ($peticion->getRecurso()){
             case 'aulas': 
                 instanciarAulaController($peticion);
@@ -111,20 +120,18 @@ function manejarPeticionDELETE($peticion){
         http_response_code(Codes::NOT_FOUND);
         exit; 
     } else {
-        $peticion['endpoint'] = partirEndpoint($peticion['endpoint']);
-
         // Seguridad solo admin
-        $body = json_decode(file_get_contents('php://input'), true);
+        // El id se extrae del endpoint, no del body
+        $body = normalizarBody($peticion['body']);
         $rol = $body['rol_user'] ?? null;
         $clave = $body['api_key'] ?? null;
-        $endpoint = $_SERVER['REQUEST_URI'];
+        $endpoint = $peticion['endpoint'];
 
         if (!validarAcceso($endpoint, $rol, $clave)) {
             http_response_code(403);
             echo json_encode(['Message' => ErrMsgs::PERMISOS]);
             exit;
-        }        
-        
+        }
         $peticion = new Peticion ($peticion);
         switch ($peticion->getRecurso()){
             case 'aulas': 
@@ -137,8 +144,10 @@ function manejarPeticionDELETE($peticion){
                 instanciarFranjaController($peticion);
                 break;
             case 'reservas':   
+                // El id de la reserva a borrar se extrae del endpoint, no del body
                 instanciarReservaController($peticion);
                 break;
-        }            
-    }  
+        }
+    }
 }
+

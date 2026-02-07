@@ -3,6 +3,7 @@ use Config\utilities\ValidValues;
 use Config\utilities\AdminEndpoints;
 
 function validarAcceso($endpoint, $rol, $clave = null) {
+   
     foreach (AdminEndpoints::ADMIN_ONLY as $adminEndpoint) {
         if (strpos($endpoint, $adminEndpoint) === 0) {
             // Solo admin y con clave secreta
@@ -14,6 +15,34 @@ function validarAcceso($endpoint, $rol, $clave = null) {
         return $rol === 'admin' || $rol === 'profesor';
     }
     // Por defecto, denegar
+    return false;
+}
+
+/**
+ * Validación personalizada para PUT según rol y recurso
+ * Si el rol es admin, permite todo (no requiere id_user).
+ * Si el rol es profesor, solo permite actualizar su perfil y sus reservas.
+ */
+function validarAccesoPUT($endpoint, $rol, $id_user, $body, $clave = null) {
+    foreach (AdminEndpoints::ADMIN_ONLY as $adminEndpoint) {
+        if (strpos($endpoint, $adminEndpoint) === 0) {
+            return $rol === 'admin' && $clave === API_SECRET_KEY;
+        }
+    }
+    if ($rol === 'admin') return true;
+    if ($rol === 'profesor') {
+        if (strpos($endpoint, '/profesores/') !== false && isset($body['id']) && $body['id'] == $id_user) {
+            return true;
+        }
+        if (strpos($endpoint, '/reservas/') !== false) {
+            // Permitir acceso si el usuario es el propietario actual de la reserva
+            // El controller se encargará de validar el traspaso
+            return true;
+        }
+        // No puede modificar aulas ni franjas
+        return false;
+    }
+    // Otros roles: denegar
     return false;
 }
 

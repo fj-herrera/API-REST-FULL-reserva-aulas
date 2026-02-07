@@ -18,16 +18,17 @@ class FranjaService extends \App\Services\BaseService {
     }
 
     protected function comprobarFranja($hora_i, $hora_f){
-    // Comprobacion franjas
         $horas = $this->obtenerFranjas();
-        // Si ya esxiste una franja con el mismo inicio y final
-        $inicio = (in_array($hora_i, $horas['horas_i'])) ? true : false;
-        $fin = (in_array($hora_f, $horas['horas_f'])) ? true : false;
-        // Si ya existe una franja con identicos fi y inicio
-        if ($inicio && $fin){
-            return true;
+        foreach ($horas as $franja) {
+            if (
+                isset($franja['hora_inicio'], $franja['hora_fin']) &&
+                $franja['hora_inicio'] === $hora_i &&
+                $franja['hora_fin'] === $hora_f
+            ) {
+                return true;
+            }
         }
-        return false; 
+        return false;
     }
 
     public function agregarFranja($body){
@@ -55,28 +56,18 @@ class FranjaService extends \App\Services\BaseService {
         $existe = in_array($body['id'], $ids_franjas);
 
         // Comprobar si el nombre ya existe en otra franja
-        $nombres = $this->obtenerNombres();
         $franja_actual = $this->obtenerPorId($body['id']);
         $nombre_actual = $franja_actual[0]['nombre'] ?? null;
-        if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
+        $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE nombre = ? AND id != ?");
+        $stmt->execute([$body['nombre'], $body['id']]);
+        if ($stmt->fetch()) {
             return 'nombre'; // Nombre duplicado
         }
 
         // Comprobar si ya existe una franja con el mismo inicio y fin (en otra franja)
-        $horas = $this->obtenerFranjas();
-        $existe_franja = false;
-        foreach ($horas as $franja) {
-            if (
-                isset($franja['hora_inicio'], $franja['hora_fin'], $franja['id']) &&
-                $franja['hora_inicio'] === $body['hora_inicio'] &&
-                $franja['hora_fin'] === $body['hora_fin'] &&
-                $franja['id'] != $body['id']
-            ) {
-                $existe_franja = true;
-                break;
-            }
-        }
-        if ($existe_franja) {
+        $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE hora_inicio = ? AND hora_fin = ? AND id != ?");
+        $stmt->execute([$body['hora_inicio'], $body['hora_fin'], $body['id']]);
+        if ($stmt->fetch()) {
             return 'franja'; // Franja duplicada
         }
 

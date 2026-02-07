@@ -46,24 +46,31 @@ class ProfesorService extends \App\Services\BaseService {
         $existe = in_array($body['id'], $profesores);
 
         // Comprobar si el nombre ya existe en otro profesor
-        $nombres = $this->obtenerNombres();
         $profesor_actual = $this->obtenerPorID($body['id']);
         $nombre_actual = $profesor_actual[0]['nombre'] ?? null;
-        if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
+        $email_actual = $profesor_actual[0]['email'] ?? null;
+
+        // Buscar nombre duplicado en otros profesores
+        $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE nombre = ? AND id != ?");
+        $stmt->execute([$body['nombre'], $body['id']]);
+        if ($stmt->fetch()) {
             return 'nombre'; // Nombre duplicado
         }
 
-        // Comprobar si el email ya existe en otro profesor
-        $emails = $this->obtenerEmails();
-        $email_actual = $profesor_actual[0]['email'] ?? null;
-        if ($body['email'] !== $email_actual && in_array($body['email'], $emails)) {
+        // Buscar email duplicado en otros profesores
+        $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE email = ? AND id != ?");
+        $stmt->execute([$body['email'], $body['id']]);
+        if ($stmt->fetch()) {
             return 'email'; // Email duplicado
         }
 
         if ($existe === true){
+            // Si el rol 
+            $rol_actual = $profesor_actual[0]['rol'] ?? null;
+            $nuevo_rol = ($rol_actual === 'profesor') ? $rol_actual : ($body['rol'] ?? $rol_actual);
             $sql = "UPDATE {$this->tabla} SET nombre = ?, email = ?, rol = ? WHERE id = ?";
             $stmt = $this->db->prepare($sql);
-            return $stmt->execute([$body['nombre'],$body['email'],$body['rol'],$body['id']]);
+            return $stmt->execute([$body['nombre'],$body['email'],$nuevo_rol,$body['id']]);
         } else {
             return 'no_existe';
         }

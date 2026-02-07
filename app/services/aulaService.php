@@ -43,7 +43,9 @@ class AulaService extends \App\Services\BaseService {
         if ($existe === true){
             $sql = "UPDATE {$this->tabla} SET nombre = ?, capacidad = ?, descripcion = ? WHERE id = ?";
             $stmt = $this->db->prepare($sql);
-            return $stmt->execute([$body['nombre'],$body['capacidad'],$body['descripcion'],$body['id']]);
+            // Si descripcion no está, usar cadena vacía
+            $descripcion = isset($body['descripcion']) ? $body['descripcion'] : '';
+            return $stmt->execute([$body['nombre'],$body['capacidad'],$descripcion,$body['id']]);
         } else {
             return 'no_existe';
         }
