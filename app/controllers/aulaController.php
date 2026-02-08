@@ -1,8 +1,16 @@
 <?php
+
 include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/aulaService.php';
 
-class AulaController extends \App\Controllers\BaseController {
+use App\Controllers\BaseController;
+
+/**
+ * Controlador para gestionar las operaciones sobre el recurso 'aulas'.
+ * Hereda de BaseController y delega las operaciones CRUD al servicio especifico, 
+ * usando el método correspondiente según la petición.
+ */
+class AulaController extends BaseController {
     public function manejarGet($peticion) {
         $servicio = new AulaService();
         return $this->Get($servicio, $peticion);
@@ -24,6 +32,10 @@ class AulaController extends \App\Controllers\BaseController {
     }
 }
 
+/**
+ * Instancia el controlador aulaController y ejecuta el método correspondiente
+ * según el método HTTP de la petición.
+ */
 function instanciarAulaController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {

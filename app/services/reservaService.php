@@ -1,28 +1,37 @@
 <?php
+
 include_once __DIR__ . '/BaseService.php';
 
-class ReservaService extends \App\Services\BaseService {
+use \App\Services\BaseService; 
+
+/**
+ * Servicio para gestionar reservas en el sistema.
+ *
+ * Hereda de BaseService y proporciona métodos para validar referencias,
+ * comprobar solapamientos de franjas y disponibilidad de aulas, y realizar
+ * operaciones CRUD sobre el recurso 'reservas'.
+ */
+class ReservaService extends BaseService {
         
     protected $tabla = 'reservas';
     protected $campos = 'id, fecha, id_profesor, id_aula, id_franja';
     protected $campos_insert = 'fecha, id_profesor, id_aula, id_franja';
     protected $fk = 'id_profesor';
 
-    // Comprueba que todos los IDs referenciados existen antes de actualizar
+    /**
+     * Comprueba que los IDs de aula, profesor y franja existen en la base de datos.
+     */
     protected function comprobarReferencias($body) {
-        // Comprobar aula
         $aulaService = new AulaService();
         $id_aula = $body['id_aula'] ?? null;
         if (!$aulaService->comprobarId($id_aula)) {
             return 'aula';
         }
-        // Comprobar profesor
         $profService = new ProfesorService();
         $id_profesor = $body['id_profesor'] ?? null;
         if (!$profService->comprobarId($id_profesor)) {
             return 'profesor';
         }
-        // Comprobar franja
         $franjaService = new FranjaService();
         $id_franja = $body['id_franja'] ?? null;
         if (!$franjaService->comprobarId($id_franja)) {
@@ -31,7 +40,9 @@ class ReservaService extends \App\Services\BaseService {
         return true;
     }
 
-    // --- NUEVO: solapamiento por rango horario ---
+    /**
+     * Comprueba si el profesor tiene reservas solapadas en la misma fecha y franja horaria.
+     */
     protected function comprobarHoraProfesor($body, $id_reserva_actual = null){
         $reservas = $this->obtenerPorID_Reservas($body['id_profesor']);
         $franjaService = new FranjaService($this->db);
@@ -52,6 +63,9 @@ class ReservaService extends \App\Services\BaseService {
         return true;
     }
 
+    /**
+     * Comprueba si el aula está disponible para la franja y fecha solicitadas.
+     */
     protected function comprobarDisponibilidad($body, $id_reserva_actual = null){
         $id_aula = $body['id_aula'];
         $reservas = $this->obtenerReservasPorAula($id_aula);
@@ -74,7 +88,8 @@ class ReservaService extends \App\Services\BaseService {
     }
 
     public function agregarReserva($body){
-        // Validar referencias antes de cualquier comprobación
+
+        // Comprobar referencias
         $referencias = $this->comprobarReferencias($body);
         if ($referencias !== true) {
             return $referencias . '_inexistente';
@@ -88,6 +103,7 @@ class ReservaService extends \App\Services\BaseService {
         } elseif (!$franja_disponible) {
             return 'franja';
         }
+        
         // Si todo está disponible, insertar
         $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?,?)";
         $stmt = $this->db->prepare($sql);
@@ -99,6 +115,7 @@ class ReservaService extends \App\Services\BaseService {
         if (!$id_reserva) {
             return 'no_existe';
         }
+
         // Comprobar referencias
         $referencias = $this->comprobarReferencias($body);
         if ($referencias !== true) {
@@ -113,6 +130,7 @@ class ReservaService extends \App\Services\BaseService {
         } elseif (!$franja_disponible) {
             return 'franja';
         }
+
         // Si todo está disponible, actualizar
         $sql = "UPDATE {$this->tabla} SET fecha = ?, id_profesor = ?, id_aula = ?, id_franja = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);

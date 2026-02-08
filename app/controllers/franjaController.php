@@ -1,8 +1,16 @@
 <?php
+
 include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/franjaService.php';
 
-class FranjaController extends \App\Controllers\BaseController {
+use App\Controllers\BaseController;
+
+/**
+ * Controlador para gestionar las operaciones sobre el recurso 'franjas'.
+ * Hereda de BaseController y delega las operaciones CRUD al servicio especifico, 
+ * usando el método correspondiente según la petición.
+ */
+class FranjaController extends BaseController {
     public function manejarGet($peticion) {
         $servicio = new FranjaService();
         return $this->GET($servicio, $peticion);
@@ -24,6 +32,10 @@ class FranjaController extends \App\Controllers\BaseController {
     }
 }
 
+/**
+ * Instancia el controlador franjaController y ejecuta el método correspondiente
+ * según el método HTTP de la petición.
+ */
 function instanciarFranjaController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {

@@ -1,31 +1,38 @@
 <?php
+
 namespace App\Controllers;
+
+include_once __DIR__ . '/../../config/validaciones.php';
+
 use Config\utilities\Codes;
 use Config\utilities\ErrMsgs;
 use Config\utilities\OkMsgs;
-include_once __DIR__ . '/../../config/validaciones.php';
 
+/**
+ * Clase base para los controladores de la API.
+ *
+ * Proporciona métodos genéricos para manejar operaciones CRUD (GET, POST, PUT, DELETE)
+ * sobre los recursos principales del sistema (aulas, profesores, franjas, reservas).
+ * Centraliza la validación de datos, la gestión de respuestas y la lógica común
+ * para todos los controladores específicos.
+ */
 class BaseController {
 
     protected function Get($servicio, $peticion) {
-        //var_dump($peticion);
         $recurso = $peticion->getRecurso();
         $id = $peticion->getID();
         $sub_recurso = $peticion->getSubRecurso();
         $body = $peticion->getBody();
-
         // /api/recurso
         if ($recurso && !$id && !$sub_recurso) {
             $data = $servicio->obtenerTodos();
             $this->validarRespuesta($data);
         }
-
         // /api/recurso/id 
         else if ($recurso && $id && !$sub_recurso) {
             $data = $servicio->obtenerPorId($id);
             $this->validarRespuesta($data);
         }
-
         // /api/recurso/sub_recurso +body
         else if ($recurso && $sub_recurso === 'disponibles' && !$id) {
             $fecha = $body['fecha'];
@@ -42,7 +49,6 @@ class BaseController {
             }
             $this->validarRespuesta($data);
         }
-
         // /api/recurso/id/sub_recurso
         else if ($recurso && $id && $sub_recurso === 'reservas') {
             $data = $servicio->obtenerPorId_Reservas($id, $sub_recurso);
@@ -51,10 +57,9 @@ class BaseController {
     }
 
     protected function Post($servicio, $peticion){
-        //var_dump($peticion);
         $recurso = $peticion->getRecurso();
         $body = $peticion->getBody();
-        
+
         if ($recurso === 'aulas') {
             $nombre_valido = validarNombreAula($body['nombre']);
             if ($nombre_valido){
@@ -90,8 +95,7 @@ class BaseController {
             }
             else {
                 if (!$nombre_valido && !$email_valido){
-                    // Este case hay que depurarlo
-                    // $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::CONFLICT);
+                    $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::CONFLICT);
                 } else if (!$nombre_valido && $email_valido){
                     $this->responder(ErrMsgs::NOMBRE_PROFESOR, null, Codes::BAD_REQUEST);
                 } else if ($nombre_valido && !$email_valido){
@@ -137,14 +141,17 @@ class BaseController {
         }
 
         if ($recurso === 'reservas') {
-            // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
+
+            // Validar formato fecha y dia no pasado
             $formato_ok = validarFecha($body['fecha']);
             $no_es_pasado = comprobarFecha($body['fecha']); 
+
             // Validación: un profesor solo puede reservar para sí mismo
             if ($body['rol_user'] === 'profesor' && $body['id_user'] != $body['id_profesor']) {
                 $this->responder('No está permitido reservar para otro profesor.', null, Codes::FORBIDDEN);
                 return;
             }
+
             if ($no_es_pasado && $formato_ok) {
                 $data = $servicio->agregarReserva($body);
                 if ($data === true){
@@ -173,13 +180,12 @@ class BaseController {
     }
 
     protected function Put($servicio, $peticion){
-        //var_dump($peticion);
+
         $recurso = $peticion->getRecurso();
         $body = $peticion->getBody();
 
         if ($recurso === 'aulas') {
             $nombre_valido = validarNombreAula($body['nombre']);
-            // Añadir el id al body desde la URL
             $body['id'] = $peticion->getId();
             if ($nombre_valido){
                 $data = $servicio->actualizarAula($body);
@@ -199,8 +205,8 @@ class BaseController {
         if ($recurso === 'profesores') {
             $nombre_valido = validarNombre($body['nombre']);
             $email_valido = validarEmail($body['email']);
-            // Añadir el id al body desde la URL
             $body['id'] = $peticion->getId();
+
             if ($nombre_valido && $email_valido){
                 $data = $servicio->actualizarProfesor($body);
                 if ($data === true){
@@ -215,8 +221,7 @@ class BaseController {
             }
             else {
                 if (!$nombre_valido && !$email_valido){
-                    // Este case hay que depurarlo
-                    // $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::CONFLICT);
+                    $this->responder(ErrMsgs::PROFESOR_EXISTE, null, Codes::CONFLICT);
                 } else if (!$nombre_valido && $email_valido){
                     $this->responder(ErrMsgs::NOMBRE_PROFESOR, null, Codes::BAD_REQUEST);
                 } else if ($nombre_valido && !$email_valido){
@@ -230,7 +235,7 @@ class BaseController {
             $hora_i_valida = validarHora($body['hora_inicio']);
             $hora_f_valida = validarHora($body['hora_fin']);
             $franja_valida = validarFranja($body['hora_inicio'], $body['hora_fin']);
-            // Añadir el id al body desde la URL
+
             $body['id'] = $peticion->getId();
             if ($nombre_valido && $hora_i_valida && $hora_f_valida && $franja_valida){
                 $data = $servicio->actualizarFranja($body);
@@ -249,44 +254,43 @@ class BaseController {
             else {
                 if (!$nombre_valido){
                     $this->responder(ErrMsgs::NOMBRE_FRANJA, null, Codes::BAD_REQUEST);
-                }
-                else if (!$hora_i_valida){
+                } else if (!$hora_i_valida){
                     $this->responder(ErrMsgs::HORA_I_FRANJA, null, Codes::BAD_REQUEST);
-                }
-                else if (!$hora_f_valida){
+                } else if (!$hora_f_valida){
                     $this->responder(ErrMsgs::HORA_F_FRANJA, null, Codes::BAD_REQUEST);
-                }
-                else if (!$franja_valida){
+                } else if (!$franja_valida){
                     $this->responder(ErrMsgs::FRANJA_INVALIDA, null, Codes::BAD_REQUEST);
                 }
             }
         }
 
         if ($recurso === 'reservas') {
-            // Obtener la reserva actual para comparar propietario
+
+            // 1 Obtener la reserva actual para comparar propietario
             $id_reserva = $peticion->getId();
             $reserva_actual = $servicio->obtenerPorID($id_reserva);
             if (empty($reserva_actual)) {
                 $this->responder(ErrMsgs::NOT_FOUND, null, Codes::NOT_FOUND);
                 return;
             }
-            // Validar campo obligatorio id_profesor antes de comprobar propiedad
+
+            // 2 Validar campo obligatorio id_profesor antes de comprobar propiedad
             if (!isset($body['id_profesor'])) {
                 $this->responder(ErrMsgs::FALTA_ID_PROFESOR_RESERVA, null, Codes::BAD_REQUEST);
                 return;
             }
             $id_propietario = $reserva_actual[0]['id_profesor'] ?? null;
-            // Validación: un profesor solo puede modificar sus propias reservas
+            // 3 Validación: un profesor solo puede modificar sus propias reservas
             if ($body['rol_user'] === 'profesor' && $body['id_user'] != $id_propietario) {
                 $this->responder(ErrMsgs::RESERVA_AJENA, null, Codes::FORBIDDEN);
                 return;
             }
-            // Impedir traspaso de reserva a otro profesor (solo si el usuario es el propietario)
+            // 4 Impedir traspaso de reserva a otro profesor (solo si el usuario es el propietario)
             if ($body['id_user'] == $id_propietario && $body['id_profesor'] != $id_propietario) {
                 $this->responder(ErrMsgs::TRASPASO_AJENO, null, Codes::FORBIDDEN);
                 return;
             }
-            // Validar campos obligatorios uno a uno
+            // 5 Validar campos obligatorios uno a uno
             if (!isset($body['fecha'])) {
                 $this->responder(ErrMsgs::FALTA_FECHA_RESERVA, null, Codes::BAD_REQUEST);
                 return;
@@ -299,7 +303,7 @@ class BaseController {
                 $this->responder(ErrMsgs::FALTA_ID_FRANJA_RESERVA, null, Codes::BAD_REQUEST);
                 return;
             }
-            // Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
+            // 6 Validar formato fecha, dia no pasado, y disponibilidad franja / aula / fecha
             $formato_ok = validarFecha($body['fecha']);
             $no_es_pasado = comprobarFecha($body['fecha']);
             $body['id'] = $peticion->getId(); 
@@ -333,7 +337,6 @@ class BaseController {
     }    
 
     protected function Delete($servicio, $peticion){
-        //var_dump($peticion);
         $id = $peticion->getIdBorrar();
         $recurso = $peticion->getRecurso();
 
@@ -343,8 +346,7 @@ class BaseController {
                 $data = $servicio->borrarAula($id);
                 if ($data === true){
                     $this->responder(OkMsgs::AULA_DELETE, null, Codes::NO_CONTENT);
-                }
-                else if ($data === 'reservas'){
+                } else if ($data === 'reservas'){
                     $this->responder(ErrMsgs::AULA_RESERVAS, null, Codes::CONFLICT);
                 }
             } 

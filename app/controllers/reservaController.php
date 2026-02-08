@@ -1,8 +1,16 @@
 <?php
+
 include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/reservaService.php';
 
-class ReservaController extends \App\Controllers\BaseController {
+use App\Controllers\BaseController;
+
+/**
+ * Controlador para gestionar las operaciones sobre el recurso 'reservas'.
+ * Hereda de BaseController y delega las operaciones CRUD al servicio especifico, 
+ * usando el método correspondiente según la petición.
+ */
+class ReservaController extends BaseController {
     public function manejarGet($peticion) {
         $servicio = new ReservaService();
         return $this->GET($servicio, $peticion);
@@ -24,7 +32,10 @@ class ReservaController extends \App\Controllers\BaseController {
     }
 }
 
-// Uso procedural (si no usas instancias en el router):
+/**
+ * Instancia el controlador reservaController y ejecuta el método correspondiente
+ * según el método HTTP de la petición.
+ */
 function instanciarReservaController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {

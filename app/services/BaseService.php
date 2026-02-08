@@ -1,11 +1,19 @@
 <?php
+
 namespace App\Services;
 
+/**
+ * Clase base para servicios de recursos.
+ *
+ * Proporciona métodos genéricos para operar en la base de datos.
+ * Incluye utilidades para obtener registros, nombres, emails, franjas y reservas, 
+ * así como para borrar reservas.
+ */
 class BaseService {
     protected $db;
     protected $tabla;
-    protected $campos; // Para SELECT
-    protected $campos_insert; // Para INSERT
+    protected $campos;
+    protected $campos_insert;
     protected $fk;
 
     public function __construct() {
@@ -35,8 +43,8 @@ class BaseService {
         return $respuesta;
     }
 
+    // Obtiene las reservas hechas por un profesor
     public function obtenerPorID_Reservas($id){
-        // Selecciona las reservas hechas por un profesor
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
         $sql = "SELECT {$campos_reserva} FROM reservas WHERE {$this->fk} = ?";
         $stmt = $this->db->prepare($sql);
@@ -96,7 +104,7 @@ class BaseService {
         $franjas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $franjas;
     }
-    // Método auxiliar para obtener reservas por aula
+
     public function obtenerReservasPorAula($id_aula){
         $campos_reserva = 'id, fecha, id_aula, id_profesor, id_franja';
         $sql = "SELECT {$campos_reserva} FROM reservas WHERE id_aula = ?";

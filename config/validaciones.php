@@ -1,4 +1,5 @@
 <?php
+
 use Config\utilities\ValidValues;
 use Config\utilities\AdminEndpoints;
 

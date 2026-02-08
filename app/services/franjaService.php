@@ -1,7 +1,17 @@
 <?php
+
 include_once __DIR__ . '/BaseService.php';
 
-class FranjaService extends \App\Services\BaseService {
+use \App\Services\BaseService; 
+
+
+/**
+ * Servicio para gestionar operaciones sobre el recurso 'franjas'.
+ *
+ * Hereda de BaseService y proporciona métodos para validar duplicidad de nombre y franja,
+ * agregar, actualizar y borrar franjas, asegurando la integridad de datos y evitando duplicados.
+ */
+class FranjaService extends BaseService {
         
     protected $tabla = 'franjas';
     protected $campos = 'id, nombre, hora_inicio, hora_fin';
@@ -11,7 +21,6 @@ class FranjaService extends \App\Services\BaseService {
     protected function comprobarNombre($nombre){
         if ($nombre) {
             $nombres = $this->obtenerNombres();
-            // Comprobar si $nombre está en el array de nombres
             return in_array($nombre, $nombres);
         }
         return false;
@@ -32,9 +41,10 @@ class FranjaService extends \App\Services\BaseService {
     }
 
     public function agregarFranja($body){
+
+        // Evalúa si el nombre o la franja ya existen para evitar duplicados
         $existe_nombre = $this->comprobarNombre($body['nombre']);
         $existe_franja = $this->comprobarFranja($body['hora_inicio'], $body['hora_fin']);
-
         if ($existe_nombre && $existe_franja) {
             return 'ambos';
         } elseif ($existe_nombre) {
@@ -43,13 +53,13 @@ class FranjaService extends \App\Services\BaseService {
             return 'franja';
         }
 
-        // Usar $this->camposInsert para evitar incluir 'id' en el insert
         $sql = "INSERT INTO {$this->tabla} ({$this->campos_insert}) VALUES (?,?,?)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$body['nombre'],$body['hora_inicio'],$body['hora_fin']]);
     }
 
     public function actualizarFranja($body){
+
         // Comprobar si existe la franja actual
         $franjas = $this->obtenerPorId($body['id']);
         $ids_franjas = array_column($franjas, 'id');
@@ -61,14 +71,14 @@ class FranjaService extends \App\Services\BaseService {
         $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE nombre = ? AND id != ?");
         $stmt->execute([$body['nombre'], $body['id']]);
         if ($stmt->fetch()) {
-            return 'nombre'; // Nombre duplicado
+            return 'nombre';
         }
 
         // Comprobar si ya existe una franja con el mismo inicio y fin (en otra franja)
         $stmt = $this->db->prepare("SELECT id FROM {$this->tabla} WHERE hora_inicio = ? AND hora_fin = ? AND id != ?");
         $stmt->execute([$body['hora_inicio'], $body['hora_fin'], $body['id']]);
         if ($stmt->fetch()) {
-            return 'franja'; // Franja duplicada
+            return 'franja'; 
         }
 
         if ($existe === true){
@@ -80,6 +90,12 @@ class FranjaService extends \App\Services\BaseService {
         }
     }
 
+    /**
+     * Elimina una franja horaria por su ID.
+     *
+     * Si la franja no tiene reservas asociadas, la elimina directamente.
+     * Si tiene reservas, primero elimina las reservas y luego la franja.
+     */
     public function borrarFranja($id){
         $reservas = $this->obtenerPorID_Reservas($id);
         if (empty($reservas)){

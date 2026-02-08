@@ -1,7 +1,16 @@
 <?php
+
 include_once __DIR__ . '/BaseService.php';
 
-class AulaService extends \App\Services\BaseService {
+use \App\Services\BaseService;
+
+/**
+ * Servicio para gestionar operaciones sobre el recurso 'aulas'.
+ *
+ * Hereda de BaseService y proporciona métodos para validar duplicidad de nombre,
+ * agregar, actualizar y borrar aulas, asegurando la integridad de datos y evitando duplicados.
+ */
+class AulaService extends BaseService {
     protected $tabla = 'aulas';
     protected $campos = 'id, nombre, capacidad, descripcion';
     protected $campos_insert = "nombre, capacidad, descripcion";
@@ -10,7 +19,6 @@ class AulaService extends \App\Services\BaseService {
     protected function comprobarNombre($nombre){
         if ($nombre) {
             $nombres = $this->obtenerNombres();
-            // Comprobar si $nombre está en el array de nombres
             return in_array($nombre, $nombres);
         }
         return false;
@@ -27,15 +35,18 @@ class AulaService extends \App\Services\BaseService {
     }
 
     public function actualizarAula($body) {
+
+        // 1 Obtiene el aula por ID y verifica si existe antes de actualizar
         $aulas = $this->obtenerPorID($body['id']);
         $ids_aulas = array_column($aulas, 'id');
         $existe = in_array($body['id'], $ids_aulas);
 
-        // Comprobar si el nombre ya existe en otra aula
+        // 2 Comprobar si el nombre ya existe en otra aula
         $nombres = $this->obtenerNombres();
         $aula_actual = $this->obtenerPorID($body['id']);
         $nombre_actual = $aula_actual[0]['nombre'] ?? null;
 
+        // 3 Si el nombre ya existe en otra aula
         if ($body['nombre'] !== $nombre_actual && in_array($body['nombre'], $nombres)) {
             return 'nombre'; // Nombre duplicado en otra aula
         }
@@ -50,7 +61,11 @@ class AulaService extends \App\Services\BaseService {
             return 'no_existe';
         }
     }
-
+    /**
+     * Elimina un aula por su ID.
+     * Si el aula no tiene reservas asociadas, la elimina directamente.
+     * Si tiene reservas, devuelve 'reservas' para indicar que no se puede eliminar.
+     */
     public function borrarAula($id){
         $reservas = $this->obtenerPorID_Reservas($id);
         if (empty($reservas)){

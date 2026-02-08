@@ -2,7 +2,14 @@
 include_once __DIR__ . '/BaseController.php';
 include_once __DIR__ . '/../services/profesorService.php';
 
-class ProfesorController extends \App\Controllers\BaseController {
+use App\Controllers\BaseController;
+
+/**
+ * Controlador para gestionar las operaciones sobre el recurso 'profesor'.
+ * Hereda de BaseController y delega las operaciones CRUD al servicio especifico, 
+ * usando el método correspondiente según la petición.
+ */
+class ProfesorController extends BaseController {
     public function manejarGet($peticion) {
         $servicio = new ProfesorService();
         return $this->GET($servicio, $peticion);
@@ -24,6 +31,10 @@ class ProfesorController extends \App\Controllers\BaseController {
     }
 }
 
+/**
+ * Instancia el controlador profesorController y ejecuta el método correspondiente
+ * según el método HTTP de la petición.
+ */
 function instanciarProfesorController($peticion) {
     $metodo = $peticion->getMetodo();  
     if ($metodo === 'GET') {

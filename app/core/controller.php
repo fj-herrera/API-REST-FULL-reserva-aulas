@@ -1,10 +1,10 @@
 <?php
+
 use Config\utilities\Codes;
 use Config\utilities\ErrMsgs;
-use Config\utilities\Peticion;
+use App\Core\Peticion;
 use function Config\utilities\validarPeticion;
 use function Config\utilities\normalizarBody;
-
 
 include_once __DIR__ . ('/../controllers/BaseController.php');
 include_once __DIR__ . ('/../controllers/aulaController.php');
@@ -12,9 +12,11 @@ include_once __DIR__ . ('/../controllers/profesorController.php');
 include_once __DIR__ . ('/../controllers/franjaController.php');
 include_once __DIR__ . ('/../controllers/reservaController.php');
 include_once __DIR__ . '/../../config/validaciones.php';
+include_once __DIR__ . '/../../config/utilities.php'; 
+include_once __DIR__ . '/Peticion.php';
 
 /**
- * Función que maneja la petición GET y llamado al Controller específico
+ * Valida la petición y llama al Controller específico
  */
 function manejarPeticionGET($peticion){
     if (validarPeticion($peticion['endpoint']) == false){
@@ -40,7 +42,7 @@ function manejarPeticionGET($peticion){
 }
 
 /**
- * Función que maneja la petición POST y llamando al Controller específico
+ * Valida la petición, valida el rol y llama al Controller específico
  */
 function manejarPeticionPOST($peticion){
     if (validarPeticion($peticion['endpoint']) == false){
@@ -52,6 +54,7 @@ function manejarPeticionPOST($peticion){
         $clave = $body['api_key'] ?? null;
         $endpoint = $peticion['endpoint'];
 
+        // Seguridad solo admin
         if (!validarAcceso($endpoint, $rol, $clave)) {
             http_response_code(403);
             echo json_encode(['Message' => ErrMsgs::PERMISOS]);
@@ -76,7 +79,7 @@ function manejarPeticionPOST($peticion){
 }
 
 /**
- * Función que maneja la petición PUT y llamando al Controller específico
+ * Valida la petición, valida el rol y llama al Controller específico
  */
 function manejarPeticionPUT($peticion){
     if (validarPeticion($peticion['endpoint']) == false){
@@ -89,6 +92,7 @@ function manejarPeticionPUT($peticion){
         $id_user = $body['id_user'] ?? null;
         $endpoint = $peticion['endpoint'];
 
+        // Seguridad solo admin
         if (!validarAccesoPUT($endpoint, $rol, $id_user, $body, $clave)) {
             http_response_code(403);
             echo json_encode(['Message' => ErrMsgs::PERMISOS]);
@@ -120,13 +124,12 @@ function manejarPeticionDELETE($peticion){
         http_response_code(Codes::NOT_FOUND);
         exit; 
     } else {
-        // Seguridad solo admin
-        // El id se extrae del endpoint, no del body
         $body = normalizarBody($peticion['body']);
         $rol = $body['rol_user'] ?? null;
         $clave = $body['api_key'] ?? null;
         $endpoint = $peticion['endpoint'];
 
+        // Seguridad solo admin
         if (!validarAcceso($endpoint, $rol, $clave)) {
             http_response_code(403);
             echo json_encode(['Message' => ErrMsgs::PERMISOS]);
@@ -143,8 +146,7 @@ function manejarPeticionDELETE($peticion){
             case 'franjas':
                 instanciarFranjaController($peticion);
                 break;
-            case 'reservas':   
-                // El id de la reserva a borrar se extrae del endpoint, no del body
+            case 'reservas':
                 instanciarReservaController($peticion);
                 break;
         }
